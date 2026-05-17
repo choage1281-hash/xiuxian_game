@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>修仙遊戲 V1-7</title>
+  <title>修仙遊戲 V1-8</title>
 <style>
   body { font-family: sans-serif; padding: 10px; background:#fafafa; }
   h1 { text-align:center; }
@@ -49,10 +49,17 @@
     background-color: #2196F3;
     color: #ffffff;
   }
+  /* V1-8 經驗值進度條與技能說明 */
+  .exp-wrap { display:inline-block; width:220px; height:14px; background:#e9ecef; border-radius:999px; overflow:hidden; vertical-align:middle; margin:0 6px; }
+  .exp-bar { height:100%; width:0%; background:#28a745; transition:width .25s; }
+  .skill-note { font-size:.9em; color:#555; margin:-4px 0 8px 0; text-align:center; }
+  .sect-feature-grid button { background-color:#0d6efd; }
+  .sect-master button { background-color:#6f42c1; }
 </style>
 </head>
 <body>
-  <h1>修仙遊戲 V1-7</h1>
+  <h1>修仙遊戲 V1-8</h1>
+  <!-- V1-8 升級音效：使用瀏覽器內建 AudioContext 產生提示音，不需外部音檔 -->
 
   <!-- 玩家資訊面板：遊戲開始後顯示；置頂顯示 -->
   <div class="panel" id="playerInfo" style="display:none">
@@ -61,7 +68,7 @@
     <strong>性別：</strong><span id="playerGender">-</span><br>
     <!-- 修為與經驗 -->
     <strong>境界：</strong><span id="cultivationStage">凡人一層</span><br>
-    <strong>經驗值：</strong><span id="exp">0</span> / <span id="expNeeded">100</span><br>
+    <strong>經驗值：</strong><span id="exp">0</span> / <span id="expNeeded">100</span><span class="exp-wrap"><span id="expBar" class="exp-bar"></span></span><span id="expPercent">0%</span><br>
     <!-- 可支配點數 -->
     <strong>屬性可支配點數：</strong><span id="attributePoints">0</span><br>
     <!-- 靈石 -->
@@ -151,14 +158,14 @@
   <!-- 技能頁面，包含技能按鈕與行動狀態，並提供返回主選單的按鈕 -->
   <div id="skillsPage" style="display:none">
     <div class="panel actions">
-      <button onclick="startAction('train')">修練</button>
-      <button onclick="startAction('mine')">採礦</button>
-      <button onclick="startAction('cutWood')">砍柴</button>
-      <button onclick="startAction('farm')">種田</button>
-      <button onclick="startAction('hunt')">狩獵</button>
-      <button onclick="showRefine('pill')">煉丹</button>
-      <button onclick="showRefine('gear')">煉器</button>
-      <button onclick="startAction('drawTalisman')">畫符</button>
+      <button onclick="startAction('train')">修練</button><div class="skill-note">消耗體力：5</div>
+      <button onclick="startAction('mine')">採礦</button><div class="skill-note">消耗體力：10</div>
+      <button onclick="startAction('cutWood')">砍柴</button><div class="skill-note">消耗體力：10</div>
+      <button onclick="startAction('farm')">種田</button><div class="skill-note">消耗體力：12</div>
+      <button onclick="startAction('hunt')">狩獵</button><div class="skill-note">消耗體力：15</div>
+      <button onclick="showRefine('pill')">煉丹</button><div class="skill-note">消耗體力：8（製作時）</div>
+      <button onclick="showRefine('gear')">煉器</button><div class="skill-note">消耗體力：8（製作時）</div>
+      <button onclick="startAction('drawTalisman')">畫符</button><div class="skill-note">消耗體力：8</div>
     </div>
     <!-- 行動狀態顯示 -->
     <div class="panel" id="currentPanel">
@@ -261,7 +268,7 @@
       <li><strong>結丹丹：</strong>在築基期到頂後使用，協助突破到結丹期。配方：靈獸內丹 1 顆、稀有礦粉 2 份、珍稀靈草（如赤炎草） 1 枚、靈石 5 個。效果：大幅提升修為，並永久增加主動屬性「精神」與「智力」各 1 點，可提高真氣上限及煉丹成功率。獲取途徑：完成宗門高階副本或試煉後才能取得配方，成功率較低，需要高悟性和高煉丹技能。</li>
       <li><strong>元嬰丹：</strong>協助從結丹期突破至元嬰期，是高層次修為的關鍵丹藥。配方：祖級靈草（如玄陰草）3 枚、靈獸王內丹 1 顆、靈石精華 10 個、稀有木精 2 個。效果：除大幅提升修為外，還可永久增加主動屬性「靈根」1 點與悟性 1 點，並提升全屬性 5%。獲取途徑：極其罕見，只能通過完成頂級宗門任務或秘境試煉取得，且需特殊丹爐或宗門煉丹師協助。</li>
     </ul>
-    <p>以上內容提供參考，未來版本將逐步開放更多物品、丹藥與裝備，請持續關注更新。</p>
+    <p>V1-8新增：經驗值改為進度條顯示；角色升級時會播放升級音效；體力值每5分鐘恢復1點，體力屬性越高，恢復間隔越短。宗門系統新增查看仙門位階一覽表、成員列表、宗門排行榜、上貢、兌換貢獻、宗門倉庫、宗門商店、宗門秘境、宗門擂台與創建宗門。宗門位階改為玩家主動消耗貢獻度兌換，兌換需求列於仙門位階一覽表。以上內容提供參考，未來版本將逐步開放更多物品、丹藥與裝備，請持續關注更新。</p>
     <button onclick="showPage('mainMenu')">返回主選單</button>
   </div>
 
@@ -287,7 +294,9 @@ const STAMINA_COST = {
   cutWood: 10,
   farm: 12,
   hunt: 15,
-  drawTalisman: 8
+  drawTalisman: 8,
+  pill: 8,
+  gear: 8
 };
 
 // 宗門位階里程碑：根據玩家累積的貢獻度提升宗門位階。
@@ -339,6 +348,26 @@ const AI_SECTS = [
   '佛光寺','逍遙谷','仙霞派','鐵血堂','星月軒','聚寶閣'
 ];
 const AI_PLAYERS = ['李逍遙','趙靈兒','林月如','張小凡','陸雪琪','周芷若'];
+
+// V1-8 宗門位階兌換表：玩家主動消耗貢獻度兌換位階
+const SECT_RANK_EXCHANGE = [
+  {title:'外門弟子', cost:100}, {title:'外門師兄', cost:300}, {title:'內門弟子', cost:800},
+  {title:'親傳弟子', cost:1500}, {title:'宗門執事', cost:3000}, {title:'宗門長老', cost:8000},
+  {title:'太上長老', cost:20000}, {title:'副宗主', cost:50000}, {title:'宗主', cost:100000}
+];
+// V1-8 宗門兌換資源表
+const CONTRIBUTION_EXCHANGE_ITEMS = [
+  {name:'靈石', cost:10, item:'spiritStones', qty:10},
+  {name:'入品丹藥', cost:30, bag:'入品丹藥', qty:1},
+  {name:'普通武器', cost:80, bag:'普通武器', qty:1},
+  {name:'普通裝備', cost:80, bag:'普通裝備', qty:1},
+  {name:'普通飾品', cost:120, bag:'普通飾品', qty:1},
+  {name:'入品靈器', cost:300, bag:'入品靈器', qty:1},
+  {name:'攻擊符箓', cost:50, bag:'攻擊符箓', qty:1}
+];
+// V1-8 體力恢復記錄
+let lastStaminaRegen = Date.now();
+
 
 // 預設 AI 宗門詳細資料：包括名稱、宗門等級、宗門總貢獻與部分成員。
 // 這些數據用於宗門系統介面，模擬 AI 宗門的基本狀態。
@@ -403,6 +432,8 @@ let player = {
   attributePoints: 10, // 初始可支配點數
   joinedSect: false,   // 是否已加入宗門
   sectName: "",      // 當前加入的宗門名稱
+  isSectMaster: false, // 是否為自創宗門宗主
+  ownSectLevel: 1, // 自創宗門等級
   resources: { stone: 0, wood: 0, herb: 0, meat: 0, elixir: 0, gear: 0 },
   // 靈石與屬性
   spiritStones: 0,
@@ -460,6 +491,8 @@ function load() {
       player.attributePoints = (player.attributePoints !== undefined) ? player.attributePoints : 10;
       player.joinedSect = player.joinedSect || false;
       player.sectName = player.sectName || "";
+      player.isSectMaster = player.isSectMaster || false;
+      player.ownSectLevel = player.ownSectLevel || 1;
       if (!player.resources) player.resources = {stone:0, wood:0, herb:0, meat:0, elixir:0, gear:0};
       // 確保資源欄位完整
       player.resources.stone = player.resources.stone || 0;
@@ -636,6 +669,11 @@ function updateUI() {
   document.getElementById('cultivationStage').innerText = getStage(player.level);
   document.getElementById('exp').innerText = player.exp;
   document.getElementById('expNeeded').innerText = getExpNeeded(player.level);
+  const expPercentValue = Math.min(100, Math.floor((player.exp / getExpNeeded(player.level)) * 100));
+  const expBar = document.getElementById('expBar');
+  if (expBar) expBar.style.width = expPercentValue + '%';
+  const expPercent = document.getElementById('expPercent');
+  if (expPercent) expPercent.innerText = expPercentValue + '%';
   document.getElementById('attributePoints').innerText = player.attributePoints;
   document.getElementById('spiritStones').innerText = player.spiritStones;
   // 被動屬性
@@ -747,6 +785,8 @@ function finishAction() {
     player.level++;
     // 每次升級給予可支配點數，例如5點
     player.attributePoints += 5;
+    // V1-8 角色升級時播放升級音效
+    playLevelUpSound();
   }
   currentAction = null;
   save(); updateUI();
@@ -797,6 +837,12 @@ function showRefine(type) {
     alert('請先加入宗門才能使用煉丹或煉器');
     return;
   }
+  const cost = STAMINA_COST[type] || 0;
+  if (player.stats.stamina < cost) {
+    alert('體力不足，無法進行此製作');
+    return;
+  }
+  player.stats.stamina = Math.max(0, player.stats.stamina - cost);
   if (type==="pill") {
     if (player.resources.herb>=3) {
       player.resources.herb-=3;
@@ -923,7 +969,8 @@ function renderSectMenu() {
   const menuDiv = document.getElementById('sectMenu');
   const infoDiv = document.getElementById('sectInfo');
   let html = '';
-  html += '<p>請選擇一個宗門加入：</p>';
+  html += '<p>請選擇一個宗門加入，或達成條件後自創宗門：</p>';
+  html += '<button onclick="createOwnSect()">創建宗門</button><br>';
   AI_SECT_DATA.forEach((sect) => {
     html += `<button onclick="joinAiSect('${sect.name}')">${sect.name}（等級 ${sect.level}，貢獻 ${sect.contribution}）</button><br>`;
   });
@@ -959,6 +1006,25 @@ function renderSectInfo() {
   html += `<p><strong>宗門總貢獻：</strong>${sect.contribution}</p>`;
   html += `<p><strong>你的個人貢獻：</strong>${player.cultivation.contribution || 0}</p>`;
   html += `<p><strong>你的宗門位階：</strong>${player.cultivation.sectRank}</p>`;
+  html += '<div class="sect-feature-grid">';
+  html += '<button onclick="showSectRankTable()">查看仙門位階一覽表</button>';
+  html += '<button onclick="showSectMembers()">成員列表</button>';
+  html += '<button onclick="showSectRanking()">宗門排行榜</button>';
+  html += '<button onclick="tributeSect()">上貢</button>';
+  html += '<button onclick="showContributionExchange()">兌換貢獻</button>';
+  html += '<button onclick="showSectWarehouse()">宗門倉庫</button>';
+  html += '<button onclick="showSectShop()">宗門商店</button>';
+  html += '<button onclick="showSectSecret()">宗門秘境</button>';
+  html += '<button onclick="showSectArena()">宗門擂台</button>';
+  if (player.isSectMaster) {
+    html += '<div class="sect-master">';
+    html += '<button onclick="upgradeOwnSect()">升級宗門</button>';
+    html += '<button onclick="renameOwnSect()">改名宗門</button>';
+    html += '<button onclick="showSectSpecialEvent()">宗門特殊活動</button>';
+    html += '</div>';
+  }
+  html += '</div>';
+  html += '<div id="sectDetail"></div>';
   // 列出成員
   html += '<p><strong>宗門成員：</strong></p>';
   html += '<ul>';
@@ -971,6 +1037,93 @@ function renderSectInfo() {
   html += '<button onclick="showPage(\'mainMenu\')">返回主選單</button>';
   if (infoDiv) infoDiv.innerHTML = html;
 }
+
+
+// V1-8 升級音效：用 Web Audio API 產生短促提示音
+function playLevelUpSound() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(660, ctx.currentTime);
+    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.36);
+  } catch(e) { console.log('升級音效無法播放', e); }
+}
+
+// V1-8 體力自動恢復：基礎每5分鐘恢復1點，體力屬性越高恢復越快
+function regenStamina() {
+  const now = Date.now();
+  const constitution = player.stats.constitution || 1;
+  const interval = Math.max(60000, 300000 - (constitution - 1) * 10000); // 最快每60秒1點
+  const gain = Math.floor((now - lastStaminaRegen) / interval);
+  if (gain > 0) {
+    player.stats.stamina = Math.min(player.stats.maxStamina, player.stats.stamina + gain);
+    lastStaminaRegen += gain * interval;
+    save(); updateUI();
+  }
+}
+
+// V1-8 創建宗門：條件暫定為築基一層以上、靈石1000、貢獻度500以上
+function createOwnSect() {
+  if (player.joinedSect) { alert('你已經加入宗門，無法再創建新宗門'); return; }
+  if (player.level < 20 || player.spiritStones < 1000 || (player.cultivation.contribution || 0) < 500) {
+    alert('創建宗門條件不足：需要築基一層以上、靈石1000、貢獻度500以上');
+    return;
+  }
+  const name = prompt('請輸入宗門名稱：', player.name + '宗');
+  if (!name) return;
+  player.joinedSect = true; player.sectName = name; player.isSectMaster = true; player.ownSectLevel = 1;
+  player.spiritStones -= 1000; player.cultivation.contribution -= 500; player.cultivation.sectRank = '宗主';
+  save(); updateUI(); renderSectInfo();
+}
+function showSectRankTable(){
+  const d=document.getElementById('sectDetail'); if(!d)return;
+  let html='<h4>仙門位階一覽表</h4><ul>';
+  SECT_RANK_EXCHANGE.forEach(r=>{html+=`<li>${r.title}：需要貢獻度 ${r.cost} <button onclick="exchangeSectRank('${r.title}',${r.cost})">兌換</button></li>`});
+  d.innerHTML=html+'</ul>';
+}
+function exchangeSectRank(title,cost){
+  if ((player.cultivation.contribution||0) < cost){alert('貢獻度不足');return;}
+  player.cultivation.contribution -= cost; player.cultivation.sectRank = title; save(); updateUI(); renderSectInfo(); alert('成功兌換宗門位階：'+title);
+}
+function showSectMembers(){ renderSectInfo(); }
+function showSectRanking(){
+  const d=document.getElementById('sectDetail'); if(!d)return;
+  const arr=[...AI_SECT_DATA.map(s=>({name:s.name, contribution:s.contribution})), {name:player.sectName||'玩家宗門', contribution:(player.cultivation.contribution||0)}].sort((a,b)=>b.contribution-a.contribution);
+  d.innerHTML='<h4>宗門排行榜</h4><ol>'+arr.map(x=>`<li>${x.name}：${x.contribution}</li>`).join('')+'</ol>';
+}
+function tributeSect(){
+  if(player.spiritStones<10){alert('靈石不足，至少需要10靈石上貢');return;}
+  player.spiritStones-=10; player.cultivation.contribution+=20; save(); updateUI(); renderSectInfo(); alert('上貢10靈石，獲得20貢獻度');
+}
+function showContributionExchange(){
+  const d=document.getElementById('sectDetail'); if(!d)return;
+  let html='<h4>兌換貢獻</h4><p>可兌換宗門資源：靈石、丹藥、武器、裝備、飾品、靈器、符箓、宗門位階。</p><ul>';
+  CONTRIBUTION_EXCHANGE_ITEMS.forEach((it,i)=>{html+=`<li>${it.name} x${it.qty}：消耗貢獻 ${it.cost} <button onclick="exchangeContributionItem(${i})">兌換</button></li>`});
+  html+='</ul><button onclick="showSectRankTable()">兌換宗門位階</button>';
+  d.innerHTML=html;
+}
+function exchangeContributionItem(i){
+  const it=CONTRIBUTION_EXCHANGE_ITEMS[i]; if(!it)return;
+  if((player.cultivation.contribution||0)<it.cost){alert('貢獻度不足');return;}
+  player.cultivation.contribution-=it.cost;
+  if(it.item==='spiritStones') player.spiritStones+=it.qty;
+  if(it.bag) addItemToBag(it.bag,it.qty);
+  save(); updateUI(); showContributionExchange();
+}
+function showSectWarehouse(){ const d=document.getElementById('sectDetail'); if(d)d.innerHTML='<h4>宗門倉庫</h4><p>目前可查看宗門資源，未來開放存取材料與裝備。</p>'; }
+function showSectShop(){ const d=document.getElementById('sectDetail'); if(d)d.innerHTML='<h4>宗門商店</h4><p>未來可用貢獻度購買丹藥、武器、裝備、飾品、靈器與符箓。</p>'; }
+function showSectSecret(){ const d=document.getElementById('sectDetail'); if(d)d.innerHTML='<h4>宗門秘境</h4><p>未來開放宗門秘境挑戰，可獲得高階資源與配方。</p>'; }
+function showSectArena(){ const d=document.getElementById('sectDetail'); if(d)d.innerHTML='<h4>宗門擂台</h4><p>未來開放宗門成員切磋與宗門PK系統。</p>'; }
+function upgradeOwnSect(){ if(!player.isSectMaster){alert('只有宗主可以使用');return;} player.ownSectLevel=(player.ownSectLevel||1)+1; save(); renderSectInfo(); alert('宗門升級成功'); }
+function renameOwnSect(){ if(!player.isSectMaster){alert('只有宗主可以使用');return;} const n=prompt('輸入新的宗門名稱', player.sectName); if(n){player.sectName=n; save(); updateUI(); renderSectInfo();} }
+function showSectSpecialEvent(){ const d=document.getElementById('sectDetail'); if(d)d.innerHTML='<h4>宗門特殊活動</h4><p>宗主專用功能，未來可開啟宗門任務、宗門祭典、宗門戰等活動。</p>'; }
 
 // 根據貢獻度更新宗門位階。
 function updateSectRank() {
@@ -1069,7 +1222,7 @@ function openSectPage() {
   showPage('sectPage');
 }
 
-load(); setInterval(tick, 1000);
+load(); setInterval(tick, 1000); setInterval(regenStamina, 1000);
 </script>
 </body>
 </html>
