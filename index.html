@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>修仙遊戲 V1-8</title>
+  <title>修仙遊戲 V1-9</title>
 <style>
   body { font-family: sans-serif; padding: 10px; background:#fafafa; }
   h1 { text-align:center; }
@@ -50,15 +50,21 @@
     color: #ffffff;
   }
   /* V1-8 經驗值進度條與技能說明 */
-  .exp-wrap { display:inline-block; width:220px; height:14px; background:#e9ecef; border-radius:999px; overflow:hidden; vertical-align:middle; margin:0 6px; }
-  .exp-bar { height:100%; width:0%; background:#28a745; transition:width .25s; }
+  .exp-wrap, .stat-wrap { display:inline-block; width:220px; height:14px; background:#e9ecef; border-radius:999px; overflow:hidden; vertical-align:middle; margin:0 6px; }
+  .exp-bar, .stat-bar { display:block; height:100%; width:0%; background:#28a745; transition:width .25s; }
+  .hp-bar { background:#dc3545; }
+  .mp-bar { background:#0d6efd; }
+  .stamina-bar { background:#ffc107; }
+  .skill-exp-list { margin-top:10px; padding:10px; background:#f8f9fa; border:1px solid #ddd; border-radius:6px; }
+  .shop-grid button { background-color:#198754; }
+  .sell-grid button { background-color:#6c757d; }
   .skill-note { font-size:.9em; color:#555; margin:-4px 0 8px 0; text-align:center; }
   .sect-feature-grid button { background-color:#0d6efd; }
   .sect-master button { background-color:#6f42c1; }
 </style>
 </head>
 <body>
-  <h1>修仙遊戲 V1-8</h1>
+  <h1>修仙遊戲 V1-9</h1>
   <!-- V1-8 升級音效：使用瀏覽器內建 AudioContext 產生提示音，不需外部音檔 -->
 
   <!-- 玩家資訊面板：遊戲開始後顯示；置頂顯示 -->
@@ -66,17 +72,17 @@
     <!-- 玩家基本資料 -->
     <strong>姓名：</strong><span id="playerName">-</span><br>
     <strong>性別：</strong><span id="playerGender">-</span><br>
-    <!-- 修為與經驗 -->
+    <!-- 修為與修為值 -->
     <strong>境界：</strong><span id="cultivationStage">凡人一層</span><br>
-    <strong>經驗值：</strong><span id="exp">0</span> / <span id="expNeeded">100</span><span class="exp-wrap"><span id="expBar" class="exp-bar"></span></span><span id="expPercent">0%</span><br>
+    <strong>修為值：</strong><span id="exp">0</span> / <span id="expNeeded">100</span><span class="exp-wrap"><span id="expBar" class="exp-bar"></span></span><span id="expPercent">0%</span><br>
     <!-- 可支配點數 -->
     <strong>屬性可支配點數：</strong><span id="attributePoints">0</span><br>
     <!-- 靈石 -->
     <strong>靈石：</strong><span id="spiritStones">0</span><br>
     <!-- 氣血值/真氣值/體力值 -->
-    <strong>氣血值：</strong><span id="attr_hp">100</span> /
-    <strong>真氣值：</strong><span id="attr_mp">100</span> /
-    <strong>體力值：</strong><span id="attr_stamina">100</span><br>
+    <strong>氣血值：</strong><span id="attr_hp">100</span> / <span id="attr_maxHp">100</span><span class="stat-wrap"><span id="hpBar" class="stat-bar hp-bar"></span></span><br>
+    <strong>真氣值：</strong><span id="attr_mp">100</span> / <span id="attr_maxMp">100</span><span class="stat-wrap"><span id="mpBar" class="stat-bar mp-bar"></span></span><br>
+    <strong>體力值：</strong><span id="attr_stamina">100</span> / <span id="attr_maxStamina">100</span><span class="stat-wrap"><span id="staminaBar" class="stat-bar stamina-bar"></span></span><br>
     <!-- 被動屬性 -->
     <strong>攻擊：</strong><span id="attr_attack">5</span> /
     <strong>防禦：</strong><span id="attr_defense">5</span><br>
@@ -172,6 +178,8 @@
       <strong>進行中：</strong><span id="currentAction">無</span>
       <span id="actionTimer" class="timer"></span>
     </div>
+    <!-- V1-9 新增：各技能專屬等級與經驗值 -->
+    <div class="skill-exp-list" id="skillExpList"></div>
     <button onclick="showPage('mainMenu')">返回主選單</button>
   </div>
 
@@ -195,7 +203,23 @@
   <!-- 商店頁面，預設隱藏 -->
   <div id="shopPage" class="panel" style="display:none">
     <h3>商店</h3>
-    <p>商店功能尚未開放</p>
+    <p>可購買恢復體力值的商品，也可出售玩家製作或採集的物品。</p>
+    <h4>購買商品</h4>
+    <div class="shop-grid">
+      <button onclick="buyShopItem('staminaSmall')">小體力丹：恢復體力 10（靈石 10）</button>
+      <button onclick="buyShopItem('staminaMedium')">中體力丹：恢復體力 30（靈石 25）</button>
+      <button onclick="buyShopItem('staminaLarge')">大體力丹：恢復體力 80（靈石 60）</button>
+    </div>
+    <h4>出售物品</h4>
+    <div class="sell-grid">
+      <button onclick="sellResource('stone')">出售礦石（1個=1靈石）</button>
+      <button onclick="sellResource('wood')">出售木材（1個=1靈石）</button>
+      <button onclick="sellResource('herb')">出售藥材/靈草（1個=2靈石）</button>
+      <button onclick="sellResource('meat')">出售靈肉（1個=2靈石）</button>
+      <button onclick="sellResource('elixir')">出售丹藥（1個=10靈石）</button>
+      <button onclick="sellResource('gear')">出售靈器/裝備（1個=15靈石）</button>
+      <button onclick="sellBagItem('符咒', 5)">出售符箓/符咒（1張=5靈石）</button>
+    </div>
     <button onclick="showPage('mainMenu')">返回主選單</button>
   </div>
 
@@ -268,7 +292,7 @@
       <li><strong>結丹丹：</strong>在築基期到頂後使用，協助突破到結丹期。配方：靈獸內丹 1 顆、稀有礦粉 2 份、珍稀靈草（如赤炎草） 1 枚、靈石 5 個。效果：大幅提升修為，並永久增加主動屬性「精神」與「智力」各 1 點，可提高真氣上限及煉丹成功率。獲取途徑：完成宗門高階副本或試煉後才能取得配方，成功率較低，需要高悟性和高煉丹技能。</li>
       <li><strong>元嬰丹：</strong>協助從結丹期突破至元嬰期，是高層次修為的關鍵丹藥。配方：祖級靈草（如玄陰草）3 枚、靈獸王內丹 1 顆、靈石精華 10 個、稀有木精 2 個。效果：除大幅提升修為外，還可永久增加主動屬性「靈根」1 點與悟性 1 點，並提升全屬性 5%。獲取途徑：極其罕見，只能通過完成頂級宗門任務或秘境試煉取得，且需特殊丹爐或宗門煉丹師協助。</li>
     </ul>
-    <p>V1-8新增：經驗值改為進度條顯示；角色升級時會播放升級音效；體力值每5分鐘恢復1點，體力屬性越高，恢復間隔越短。宗門系統新增查看仙門位階一覽表、成員列表、宗門排行榜、上貢、兌換貢獻、宗門倉庫、宗門商店、宗門秘境、宗門擂台與創建宗門。宗門位階改為玩家主動消耗貢獻度兌換，兌換需求列於仙門位階一覽表。以上內容提供參考，未來版本將逐步開放更多物品、丹藥與裝備，請持續關注更新。</p>
+    <p>V1-8新增：經驗值改為進度條顯示；角色升級時會播放升級音效；體力值每5分鐘恢復1點，體力屬性越高，恢復間隔越短。V1-9新增：修練對應修為值，其餘技能各自擁有專屬經驗值與等級；氣血值、真氣值、體力值改為目前值/最大值與血條顯示；商店新增恢復體力值商品，並開放收購礦石、木材、藥材、靈肉、丹藥、靈器、符箓等。宗門系統新增查看仙門位階一覽表、成員列表、宗門排行榜、上貢、兌換貢獻、宗門倉庫、宗門商店、宗門秘境、宗門擂台與創建宗門。宗門位階改為玩家主動消耗貢獻度兌換，兌換需求列於仙門位階一覽表。以上內容提供參考，未來版本將逐步開放更多物品、丹藥與裝備，請持續關注更新。</p>
     <button onclick="showPage('mainMenu')">返回主選單</button>
   </div>
 
@@ -435,6 +459,17 @@ let player = {
   isSectMaster: false, // 是否為自創宗門宗主
   ownSectLevel: 1, // 自創宗門等級
   resources: { stone: 0, wood: 0, herb: 0, meat: 0, elixir: 0, gear: 0 },
+  // V1-9：各技能專屬經驗值與等級，修練本身對應修為值
+  skillExp: {
+    mine: { level: 1, exp: 0 },
+    cutWood: { level: 1, exp: 0 },
+    farm: { level: 1, exp: 0 },
+    hunt: { level: 1, exp: 0 },
+    alchemy: { level: 1, exp: 0 },
+    forging: { level: 1, exp: 0 },
+    drawTalisman: { level: 1, exp: 0 }
+  },
+  lastStaminaRegen: Date.now(),
   // 靈石與屬性
   spiritStones: 0,
   stats: {
@@ -501,6 +536,14 @@ function load() {
       player.resources.meat = player.resources.meat || 0;
       player.resources.elixir = player.resources.elixir || 0;
       player.resources.gear = player.resources.gear || 0;
+      // V1-9：補齊各技能專屬經驗值與等級
+      if (!player.skillExp) player.skillExp = {};
+      ['mine','cutWood','farm','hunt','alchemy','forging','drawTalisman'].forEach(k => {
+        if (!player.skillExp[k]) player.skillExp[k] = { level: 1, exp: 0 };
+        if (player.skillExp[k].level === undefined) player.skillExp[k].level = 1;
+        if (player.skillExp[k].exp === undefined) player.skillExp[k].exp = 0;
+      });
+      if (!player.lastStaminaRegen) player.lastStaminaRegen = Date.now();
       player.spiritStones = player.spiritStones || 0;
       if (!player.stats) {
         player.stats = {
@@ -584,6 +627,16 @@ function resetGame() {
     joinedSect: false,
     sectName: "",
     resources: { stone: 0, wood: 0, herb: 0, meat: 0, elixir: 0, gear: 0 },
+    skillExp: {
+      mine: { level: 1, exp: 0 },
+      cutWood: { level: 1, exp: 0 },
+      farm: { level: 1, exp: 0 },
+      hunt: { level: 1, exp: 0 },
+      alchemy: { level: 1, exp: 0 },
+      forging: { level: 1, exp: 0 },
+      drawTalisman: { level: 1, exp: 0 }
+    },
+    lastStaminaRegen: Date.now(),
     spiritStones: 0,
     stats: {
       hp: 100, maxHp: 100,
@@ -677,11 +730,19 @@ function updateUI() {
   document.getElementById('attributePoints').innerText = player.attributePoints;
   document.getElementById('spiritStones').innerText = player.spiritStones;
   // 被動屬性
-  document.getElementById('attr_hp').innerText = player.stats.hp;
-  document.getElementById('attr_mp').innerText = player.stats.mp;
+  document.getElementById('attr_hp').innerText = Math.floor(player.stats.hp);
+  const maxHpEl = document.getElementById('attr_maxHp');
+  if (maxHpEl) maxHpEl.innerText = Math.floor(player.stats.maxHp);
+  document.getElementById('attr_mp').innerText = Math.floor(player.stats.mp);
+  const maxMpEl = document.getElementById('attr_maxMp');
+  if (maxMpEl) maxMpEl.innerText = Math.floor(player.stats.maxMp);
   // 體力值顯示
   const staminaEl = document.getElementById('attr_stamina');
-  if (staminaEl) staminaEl.innerText = player.stats.stamina;
+  if (staminaEl) staminaEl.innerText = Math.floor(player.stats.stamina);
+  const maxStaminaEl = document.getElementById('attr_maxStamina');
+  if (maxStaminaEl) maxStaminaEl.innerText = Math.floor(player.stats.maxStamina);
+  updateStatBars();
+  updateSkillExpUI();
   document.getElementById('attr_attack').innerText = player.stats.attack;
   document.getElementById('attr_defense').innerText = player.stats.defense;
   document.getElementById('attr_speed').innerText = player.stats.speed;
@@ -760,14 +821,15 @@ function finishAction() {
   let expGain = 0;
   switch (currentAction) {
     case "train": expGain = 10; break;
-    case "mine": player.resources.stone++; expGain = 5; break;
-    case "cutWood": player.resources.wood++; expGain = 6; break;
-    case "farm": player.resources.herb++; expGain = 6; break;
-    case "hunt": player.resources.meat++; expGain = 8; break;
+    case "mine": player.resources.stone++; expGain = 0; gainSkillExp('mine', 5); break;
+    case "cutWood": player.resources.wood++; expGain = 0; gainSkillExp('cutWood', 6); break;
+    case "farm": player.resources.herb++; expGain = 0; gainSkillExp('farm', 6); break;
+    case "hunt": player.resources.meat++; expGain = 0; gainSkillExp('hunt', 8); break;
     case "drawTalisman":
       // 畫符產生符咒物品
       if (addItemToBag('符咒', 1)) {
-        expGain = 4;
+        expGain = 0;
+        gainSkillExp('drawTalisman', 4);
       }
       break;
   }
@@ -806,6 +868,104 @@ function addItemToBag(name, qty) {
     }
   }
   return true;
+}
+
+
+// V1-9：取得技能升級所需經驗
+function getSkillExpNeeded(skillKey) {
+  const data = player.skillExp && player.skillExp[skillKey] ? player.skillExp[skillKey] : { level: 1, exp: 0 };
+  return 50 + (data.level - 1) * 25;
+}
+
+// V1-9：增加技能專屬經驗並處理技能升級
+function gainSkillExp(skillKey, amount) {
+  if (!player.skillExp) player.skillExp = {};
+  if (!player.skillExp[skillKey]) player.skillExp[skillKey] = { level: 1, exp: 0 };
+  const data = player.skillExp[skillKey];
+  data.exp += amount;
+  while (data.exp >= getSkillExpNeeded(skillKey)) {
+    data.exp -= getSkillExpNeeded(skillKey);
+    data.level++;
+    playLevelUpSound();
+  }
+}
+
+// V1-9：更新技能專屬經驗與等級顯示
+function updateSkillExpUI() {
+  const el = document.getElementById('skillExpList');
+  if (!el || !player.skillExp) return;
+  const names = { mine:'採礦', cutWood:'砍柴', farm:'種田', hunt:'狩獵', alchemy:'煉丹', forging:'煉器', drawTalisman:'畫符' };
+  let html = '<h4>技能等級與經驗值</h4>';
+  Object.keys(names).forEach(k => {
+    const data = player.skillExp[k] || { level: 1, exp: 0 };
+    const need = getSkillExpNeeded(k);
+    const pct = Math.min(100, Math.floor((data.exp / need) * 100));
+    html += `<div><strong>${names[k]}</strong> Lv.${data.level}：${data.exp} / ${need}<span class="exp-wrap"><span class="exp-bar" style="width:${pct}%"></span></span>${pct}%</div>`;
+  });
+  el.innerHTML = html;
+}
+
+// V1-9：更新氣血、真氣、體力進度條
+function updateStatBars() {
+  const setBar = (id, value, max) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const pct = max > 0 ? Math.min(100, Math.floor((value / max) * 100)) : 0;
+    el.style.width = pct + '%';
+  };
+  setBar('hpBar', player.stats.hp, player.stats.maxHp);
+  setBar('mpBar', player.stats.mp, player.stats.maxMp);
+  setBar('staminaBar', player.stats.stamina, player.stats.maxStamina);
+}
+
+// V1-9：體力自動恢復，基礎每5分鐘恢復1點，體力屬性越高越快
+function recoverStaminaByTime() {
+  if (!player.lastStaminaRegen) player.lastStaminaRegen = Date.now();
+  const interval = Math.max(60000, 300000 - (player.stats.constitution - 1) * 10000);
+  const now = Date.now();
+  const gain = Math.floor((now - player.lastStaminaRegen) / interval);
+  if (gain > 0 && player.stats.stamina < player.stats.maxStamina) {
+    player.stats.stamina = Math.min(player.stats.maxStamina, player.stats.stamina + gain);
+    player.lastStaminaRegen += gain * interval;
+    save(); updateUI();
+  }
+}
+
+// V1-9：購買商店體力商品
+function buyShopItem(itemKey) {
+  const items = {
+    staminaSmall: { name:'小體力丹', cost:10, stamina:10 },
+    staminaMedium: { name:'中體力丹', cost:25, stamina:30 },
+    staminaLarge: { name:'大體力丹', cost:60, stamina:80 }
+  };
+  const item = items[itemKey];
+  if (!item) return;
+  if (player.spiritStones < item.cost) { alert('靈石不足'); return; }
+  player.spiritStones -= item.cost;
+  player.stats.stamina = Math.min(player.stats.maxStamina, player.stats.stamina + item.stamina);
+  alert(`購買${item.name}成功，恢復體力 ${item.stamina}`);
+  save(); updateUI();
+}
+
+// V1-9：出售資源給商店
+function sellResource(key) {
+  const prices = { stone:1, wood:1, herb:2, meat:2, elixir:10, gear:15 };
+  const names = { stone:'礦石', wood:'木材', herb:'藥材/靈草', meat:'靈肉', elixir:'丹藥', gear:'靈器/裝備' };
+  if (!player.resources[key] || player.resources[key] <= 0) { alert(names[key] + '不足'); return; }
+  player.resources[key]--;
+  player.spiritStones += prices[key];
+  alert(`出售${names[key]}成功，獲得靈石 ${prices[key]}`);
+  save(); updateUI();
+}
+
+// V1-9：出售背包物品給商店，例如符箓
+function sellBagItem(name, price) {
+  if (!player.bag || !player.bag.items[name] || player.bag.items[name] <= 0) { alert(name + '不足'); return; }
+  player.bag.items[name]--;
+  if (player.bag.items[name] <= 0) delete player.bag.items[name];
+  player.spiritStones += price;
+  alert(`出售${name}成功，獲得靈石 ${price}`);
+  save(); updateUI();
 }
 
 // 更新背包內容顯示
@@ -848,6 +1008,8 @@ function showRefine(type) {
       player.resources.herb-=3;
       // 煉丹生成入品丹藥並放入背包
       if (addItemToBag('入品丹藥', 1)) {
+        gainSkillExp('alchemy', 10);
+        player.stats.stamina = Math.max(0, player.stats.stamina - 8);
         alert("成功煉出丹藥！");
       }
     } else {
@@ -858,6 +1020,8 @@ function showRefine(type) {
     if (player.resources.stone>=2 && player.resources.meat>=2) {
       player.resources.stone-=2; player.resources.meat-=2;
       player.resources.gear++;
+      gainSkillExp('forging', 10);
+      player.stats.stamina = Math.max(0, player.stats.stamina - 8);
       alert("煉器成功！");
     } else alert("礦石與獸肉不足，需要2個礦石與2個獸肉");
   }
@@ -1222,7 +1386,7 @@ function openSectPage() {
   showPage('sectPage');
 }
 
-load(); setInterval(tick, 1000); setInterval(regenStamina, 1000);
+load(); setInterval(tick, 1000); setInterval(recoverStaminaByTime, 10000); setInterval(regenStamina, 1000);
 </script>
 </body>
 </html>
