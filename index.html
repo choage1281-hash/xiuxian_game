@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>修仙遊戲 V1-2</title>
+  <title>修仙遊戲 V1-7</title>
 <style>
   body { font-family: sans-serif; padding: 10px; background:#fafafa; }
   h1 { text-align:center; }
@@ -25,21 +25,37 @@
   .panel { border:1px solid #ccc; padding:10px; margin:10px 0; background:#fff; }
   .timer { color:#d33; }
   #inventory span { display:block; margin:4px 0; }
+
+  /* 以下樣式改進主選單與各頁面按鈕的外觀，參考運氣訓練工具的卡片風格 */
+  #mainMenu button,
+  #sectPage button,
+  #inventoryPage button,
+  #shopPage button,
+  #rulesPage button,
+  #levelsPage button,
+  #skillsPage > button {
+    display: block;
+    width: 100%;
+    margin: 8px 0;
+    padding: 10px;
+    font-size: 1em;
+    border: none;
+    border-radius: 5px;
+    background-color: #4CAF50;
+    color: #ffffff;
+    cursor: pointer;
+  }
+  #skillsPage .actions button {
+    background-color: #2196F3;
+    color: #ffffff;
+  }
 </style>
 </head>
 <body>
-  <h1>修仙遊戲 V1-2</h1>
-  <!-- 角色創建面板：輸入姓名與選擇性別，在開始遊戲前顯示 -->
-  <div id="startPanel" class="panel" style="display:none">
-    <h3>角色創建</h3>
-    <label>姓名：<input type="text" id="inputName"></label><br>
-    <label>性別：
-      <label><input type="radio" name="gender" value="男" checked>男</label>
-      <label><input type="radio" name="gender" value="女">女</label>
-    </label><br>
-    <button onclick="confirmStart()">開始遊戲</button>
-  </div>
-  <div class="panel" id="playerInfo">
+  <h1>修仙遊戲 V1-7</h1>
+
+  <!-- 玩家資訊面板：遊戲開始後顯示；置頂顯示 -->
+  <div class="panel" id="playerInfo" style="display:none">
     <!-- 玩家基本資料 -->
     <strong>姓名：</strong><span id="playerName">-</span><br>
     <strong>性別：</strong><span id="playerGender">-</span><br>
@@ -50,9 +66,10 @@
     <strong>屬性可支配點數：</strong><span id="attributePoints">0</span><br>
     <!-- 靈石 -->
     <strong>靈石：</strong><span id="spiritStones">0</span><br>
-    <!-- HP/MP -->
-    <strong>HP：</strong><span id="attr_hp">100</span> /
-    <strong>MP：</strong><span id="attr_mp">100</span><br>
+    <!-- 氣血值/真氣值/體力值 -->
+    <strong>氣血值：</strong><span id="attr_hp">100</span> /
+    <strong>真氣值：</strong><span id="attr_mp">100</span> /
+    <strong>體力值：</strong><span id="attr_stamina">100</span><br>
     <!-- 被動屬性 -->
     <strong>攻擊：</strong><span id="attr_attack">5</span> /
     <strong>防禦：</strong><span id="attr_defense">5</span><br>
@@ -68,40 +85,91 @@
     <!-- 修仙屬性 -->
     <strong>靈根：</strong><span id="cult_root">1</span> /
     <strong>悟性：</strong><span id="cult_comprehension">1</span><br>
-    <!-- 宗門位階與狀態 -->
-    <strong>仙門位階：</strong><span id="cult_sectRank">普通弟子</span><br>
+    <!-- 宗門狀態、位階與貢獻度 -->
     <strong>宗門狀態：</strong><span id="sectStatus">未加入</span><br>
+    <strong>宗門位階：</strong><span id="cult_sectRank">普通弟子</span><br>
+    <strong>貢獻度：</strong><span id="contribution">0</span><br>
     <!-- 裝備資訊 -->
     <strong>裝備-武器：</strong><span id="equip_weapon">無</span><br>
     <strong>裝備-盔甲：</strong><span id="equip_armor">無</span><br>
     <strong>裝備-飾品：</strong><span id="equip_accessory">無</span>
   </div>
+  <!-- 角色創建面板：輸入姓名與選擇性別，在開始遊戲前顯示 -->
+  <div id="startPanel" class="panel" style="display:none">
+    <h3>角色創建</h3>
+    <label>姓名：<input type="text" id="inputName"></label><br>
+    <label>性別：
+      <label><input type="radio" name="gender" value="男" checked>男</label>
+      <label><input type="radio" name="gender" value="女">女</label>
+    </label><br>
+    <!-- 可支配點數與屬性分配，在創建角色時顯示 -->
+    <strong>屬性可支配點數：</strong><span id="start_attributePoints">0</span><br>
+    <strong>力量：</strong><span id="start_attr_strength">1</span> <button onclick="allocateAttribute('strength')">＋</button> /
+    <strong>敏捷：</strong><span id="start_attr_dexterity">1</span> <button onclick="allocateAttribute('dexterity')">＋</button><br>
+    <strong>智力：</strong><span id="start_attr_intelligence">1</span> <button onclick="allocateAttribute('intelligence')">＋</button> /
+    <strong>體力：</strong><span id="start_attr_constitution">1</span> <button onclick="allocateAttribute('constitution')">＋</button><br>
+    <strong>精神：</strong><span id="start_attr_spirit">1</span> <button onclick="allocateAttribute('spirit')">＋</button> /
+    <strong>魅力：</strong><span id="start_attr_charisma">1</span> <button onclick="allocateAttribute('charisma')">＋</button><br>
+    <button onclick="confirmStart()">開始遊戲</button>
+  </div>
 
-  <div class="panel actions">
-    <button onclick="startAction('train')">修練</button>
-    <button onclick="startAction('mine')">採礦</button>
-    <button onclick="startAction('cutWood')">砍柴</button>
-    <button onclick="startAction('farm')">種田</button>
-    <button onclick="startAction('hunt')">狩獵</button>
-    <button onclick="showRefine('pill')">煉丹</button>
-    <button onclick="showRefine('gear')">煉器</button>
-    <button onclick="startAction('drawTalisman')">畫符</button>
-    <button onclick="joinSect()">加入宗門</button>
-    <button onclick="openShop()">商店</button>
-    <button onclick="toggleRules()">遊戲說明</button>
+  <!-- 主選單：完成角色創建後會顯示此頁面 -->
+  <div id="mainMenu" class="panel" style="display:none">
+    <h3>主選單</h3>
+    <button onclick="showPage('skillsPage')">技能</button>
+    <button onclick="openSectPage()">宗門系統</button>
+    <button onclick="showPage('inventoryPage')">背包</button>
+    <button onclick="showPage('shopPage')">商店</button>
+    <button onclick="showPage('rulesPage')">遊戲說明</button>
+    <button onclick="showPage('levelsPage')">查看修為等級一覽表</button>
     <button onclick="resetGame()">重置遊戲</button>
     <button onclick="exportSave()">匯出存檔</button>
-    <input type="file" id="importFile" style="display:none" onchange="importSave(event)">
-    <button onclick="document.getElementById('importFile').click()">匯入存檔</button>
+    <input type="file" id="importFileMain" style="display:none" onchange="importSave(event)">
+    <button onclick="document.getElementById('importFileMain').click()">匯入存檔</button>
   </div>
 
-  <div class="panel">
-    <strong>進行中：</strong><span id="currentAction">無</span>
-    <span id="actionTimer" class="timer"></span>
+  <!-- 修為等級一覽頁面，預設隱藏 -->
+  <div id="levelsPage" class="panel" style="display:none">
+    <h3>修為等級一覽</h3>
+    <div id="levelList">
+      <!-- 將在顯示時由程式填充每一層的名稱與所需經驗 -->
+    </div>
+    <button onclick="showPage('mainMenu')">返回主選單</button>
   </div>
 
-  <!-- 統一背包與資源顯示 -->
-  <div id="inventory" class="panel">
+  <!-- 宗門系統頁面，預設隱藏；顯示加入或管理宗門的相關資訊 -->
+  <div id="sectPage" class="panel" style="display:none">
+    <h3>宗門系統</h3>
+    <!-- 菜單區：未加入宗門時顯示宗門列表，已加入時不顯示 -->
+    <div id="sectMenu"></div>
+    <!-- 宗門資訊區：顯示當前宗門資料與成員列表 -->
+    <div id="sectInfo"></div>
+    <!-- 返回主選單的按鈕由宗門菜單或資訊區生成，避免重複 -->
+  </div>
+  <!-- 玩家資訊面板原位置已移至頁面頂部 -->
+
+  <!-- 技能頁面，包含技能按鈕與行動狀態，並提供返回主選單的按鈕 -->
+  <div id="skillsPage" style="display:none">
+    <div class="panel actions">
+      <button onclick="startAction('train')">修練</button>
+      <button onclick="startAction('mine')">採礦</button>
+      <button onclick="startAction('cutWood')">砍柴</button>
+      <button onclick="startAction('farm')">種田</button>
+      <button onclick="startAction('hunt')">狩獵</button>
+      <button onclick="showRefine('pill')">煉丹</button>
+      <button onclick="showRefine('gear')">煉器</button>
+      <button onclick="startAction('drawTalisman')">畫符</button>
+    </div>
+    <!-- 行動狀態顯示 -->
+    <div class="panel" id="currentPanel">
+      <strong>進行中：</strong><span id="currentAction">無</span>
+      <span id="actionTimer" class="timer"></span>
+    </div>
+    <button onclick="showPage('mainMenu')">返回主選單</button>
+  </div>
+
+  <!-- 背包頁面，預設隱藏 -->
+  <div id="inventoryPage" class="panel" style="display:none">
     <h3>背包（<span id="bagCapacity">10</span>格）</h3>
     <!-- 資源列表 -->
     <div id="resourceList">
@@ -114,16 +182,87 @@
     </div>
     <!-- 背包物品列表 -->
     <ul id="bagList"></ul>
+    <button onclick="showPage('mainMenu')">返回主選單</button>
   </div>
 
-  <!-- 遊戲說明面板，預設隱藏，可透過按鈕開啟/關閉 -->
-  <div id="gameRules" class="panel" style="display:none">
+  <!-- 商店頁面，預設隱藏 -->
+  <div id="shopPage" class="panel" style="display:none">
+    <h3>商店</h3>
+    <p>商店功能尚未開放</p>
+    <button onclick="showPage('mainMenu')">返回主選單</button>
+  </div>
+
+  <!-- 遊戲說明頁面，預設隱藏 -->
+  <div id="rulesPage" class="panel" style="display:none">
     <h3>遊戲說明</h3>
-    <p>本遊戲為修仙模擬。玩家可透過修練、採礦、砍柴、種田、狩獵、煉丹、煉器與畫符等行動來獲得資源和提升修為。</p>
-    <p>玩家開局需輸入姓名並選擇性別。起始 HP、MP 均為 100 點。攻擊、防禦、速度、運氣為被動屬性，初始各 5 點。力量、敏捷、智力、體力、精神、魅力為主動屬性，初始各 1 點，透過升級獲得的「屬性可支配點數」自由分配，主動屬性會影響被動屬性與最大 HP/MP。</p>
-    <p>加入宗門後才能使用採礦、砍柴、種田、狩獵、煉丹、煉器與畫符等技能；未加入宗門時只能修練。可透過「加入宗門」按鈕加入宗門。</p>
-    <p>背包初始有 10 格，相同物品可以疊加，例如「入品丹藥(10)」。未來可以透過「儲物袋」來提升背包空間。</p>
-    <p>商店功能與宗門系統將在後續版本開放，敬請期待。</p>
+    <p>本遊戲為修仙模擬養成，所有玩家在開始旅程前，<strong>必須創建角色</strong>並完成屬性點分配。請在角色創建頁中輸入姓名、選擇性別，並使用初始的「屬性可支配點數」分配至<strong>力量、敏捷、智力、體力、精神、魅力</strong>等主動屬性。<br>遊戲開始時僅顯示角色創建與屬性分配介面，創建完成後才會顯示玩家資訊、技能按鈕、進行中狀態與背包等面板。起始氣血值與真氣值均為 100，體力值（體力）為 100。攻擊、防禦、速度、運氣為被動屬性，初始各為 5 點；主動屬性初始各為 1 點，主動屬性將影響被動屬性與最大氣血值、真氣值、體力值。</p>
+    <p>每次行動會消耗體力值；體力值不足時無法進行行動。隨著修為提升、使用丹藥或休息可恢復體力值。</p>
+    <p>除了<strong>修練</strong>外，其餘技能需加入宗門後才能使用。未加入宗門的玩家被稱為<strong>散修</strong>。加入後，行動所獲得的經驗將轉化為<strong>貢獻度</strong>，貢獻度可提升你的<strong>宗門位階</strong>（散修 → 外門弟子 → 內門弟子 → 長老……），具體階位請參考「運氣訓練工具」中的宗門位階列表。你可以選擇加入預設的 AI 宗門（目前共有 20 個，例如紫雲宗、青雲門、玄天宗、白玉宮等），或在未來達到條件後自行創建宗門。未來版本還可能開放宗門 PK 系統，敬請期待。</p>
+    <p>背包初始有 10 格，相同物品可疊加，例如「入品丹藥(10)」。日後可透過「儲物袋」提升背包空間。</p>
+    <p>點擊「查看修為等級一覽」可查看每個境界與小層所需的經驗值；點擊「宗門系統」可查看或加入宗門；點擊「遊戲說明」可再次閱讀本說明。</p>
+
+    <h4>技能與資源詳解</h4>
+    <p>以下列出各項技能的產出資源、工具需求、與其他技能的關聯，並提供常見物品範例：</p>
+    <h5>砍柴</h5>
+    <ul>
+      <li><strong>目標產出：</strong>木材、稀有木精。</li>
+      <li><strong>工具需求：</strong>斧頭（不同等級的斧頭影響木材獲取量和稀有掉落率）。</li>
+      <li><strong>與其他技能的關聯：</strong>木材可用於打造槓桿、弓弩或修補鍛造台；也可製作陷阱或狩獵弓提高狩獵成功率；稀有木精可用於煉製木靈丹等特殊丹藥，增強自然系屬性或恢復體力。</li>
+      <li><strong>物品舉例：</strong>粗斧頭（初始可用木材和簡易石料製作，效率較低）；靈木（高級材料，可用於打造精良弓弩或法杖）。</li>
+    </ul>
+    <h5>採礦</h5>
+    <ul>
+      <li><strong>目標產出：</strong>礦石、稀有礦脈、靈石碎片。</li>
+      <li><strong>工具需求：</strong>鎬子（等級越高越容易挖到稀有礦）。</li>
+      <li><strong>與其他技能的關聯：</strong>礦石是煉器的主要原料；部分丹藥（如增強防禦的金剛丹）需要稀有礦物粉末；採礦時可能挖掘到增地力的土壤或靈石碎片，用於提升耕地肥力或製作栽種工具。</li>
+      <li><strong>物品舉例：</strong>鐵礦石（常用於製作武器）；靈石碎片（可兌換靈石或作為符咒材料）。</li>
+    </ul>
+    <h5>種田</h5>
+    <ul>
+      <li><strong>目標產出：</strong>靈草、靈水、稀有藥材。</li>
+      <li><strong>工具需求：</strong>鋤頭、水壺、種子袋。</li>
+      <li><strong>與其他技能的關聯：</strong>靈草是煉丹的主要原料；靈水和稀有草種可加入符咒配方提高成功率；某些裝備可鍍上稀有藥材以提升回復或治療效果。</li>
+      <li><strong>物品舉例：</strong>靈田肥料（提升靈草產量，需要礦粉和獸糞製成）；水靈草（稀有草種，用於煉製恢復類丹藥）。</li>
+    </ul>
+    <h5>狩獵</h5>
+    <ul>
+      <li><strong>目標產出：</strong>靈獸肉、皮革、骨刺、內丹。</li>
+      <li><strong>工具需求：</strong>弓弩、陷阱、匕首。</li>
+      <li><strong>與其他技能的關聯：</strong>皮革和骨刺可鍛造成護甲或飾品；靈獸內丹可用於煉製升階丹、補氣丹；靈獸骨粉常用於繪製攻擊符、防禦符。</li>
+      <li><strong>物品舉例：</strong>獸皮（可用於煉器打造輕甲、鞋靴）；靈獸內丹（稀有掉落，煉丹或強化裝備不可或缺）。</li>
+    </ul>
+    <h5>煉丹</h5>
+    <ul>
+      <li><strong>目標產出：</strong>各類丹藥（回復類、增益類、突破類）。</li>
+      <li><strong>工具需求：</strong>丹爐、火種、煉丹爐鼎。</li>
+      <li><strong>與其他技能的關聯：</strong>突破丹可協助修練突破境界；增益丹藥能暫時提升採礦、砍柴或狩獵效率；某些符咒需要丹藥作為媒介。</li>
+      <li><strong>物品舉例：</strong>聚氣丹（增加修練時獲得的經驗值）；強身丹（提升體力，間接提高採礦、砍柴耐久）。</li>
+    </ul>
+    <h5>煉器</h5>
+    <ul>
+      <li><strong>目標產出：</strong>武器、防具、法器、飾品。</li>
+      <li><strong>工具需求：</strong>鍛造台、槌子、火爐。</li>
+      <li><strong>與其他技能的關聯：</strong>可改良武器和工具以提升採集效率；打造的法器可提高修練效率或提供護身效果；可在裝備上附魔符咒以增強特殊屬性。</li>
+      <li><strong>物品舉例：</strong>初級鎬（需要木材和鐵礦石製作，提高採礦效率）；靈力法杖（結合稀有木材與內丹，增加法術傷害或煉丹品質）。</li>
+    </ul>
+    <h5>畫符</h5>
+    <ul>
+      <li><strong>目標產出：</strong>攻擊符、防禦符、治療符、增益符。</li>
+      <li><strong>工具需求：</strong>符紙、靈水、符筆、墨。</li>
+      <li><strong>與其他技能的關聯：</strong>使用增益符或幸運符可提升採集稀有掉落率；使用精神集中符可提高修練或煉丹成功率；符咒可附魔於裝備，賦予持久效果。</li>
+      <li><strong>物品舉例：</strong>攻擊符（使用獸骨粉和靈水繪製，可在狩獵或戰鬥中使用）；護身符（用稀有草藥和木精繪製，短時間提高防禦值）。</li>
+    </ul>
+
+    <h4>丹藥配方範例</h4>
+    <p>下列丹藥為經典突破丹範例，實際效果與材料要求可依遊戲平衡微調：</p>
+    <ul>
+      <li><strong>練氣丹：</strong>協助突破練氣期小層次。配方：基礎靈草 3 枚、靈石碎片 1 個、清水。效果：立即增加一定量修為，並短暫提高悟性，使修練效率提升 10%，持續 30 分鐘。獲取途徑：初級煉丹配方，可在宗門任務或商店購買。</li>
+      <li><strong>築基丹：</strong>突破築基境界瓶頸（練氣期滿後使用）。配方：稀有靈草（如水靈草） 2 枚、獸骨粉 1 份、靈石碎片 3 個。效果：提升大量修為，並永久增加主動屬性「體力」1 點。獲取途徑：需宗門長老指導或完成特定任務後獲得配方。</li>
+      <li><strong>結丹丹：</strong>在築基期到頂後使用，協助突破到結丹期。配方：靈獸內丹 1 顆、稀有礦粉 2 份、珍稀靈草（如赤炎草） 1 枚、靈石 5 個。效果：大幅提升修為，並永久增加主動屬性「精神」與「智力」各 1 點，可提高真氣上限及煉丹成功率。獲取途徑：完成宗門高階副本或試煉後才能取得配方，成功率較低，需要高悟性和高煉丹技能。</li>
+      <li><strong>元嬰丹：</strong>協助從結丹期突破至元嬰期，是高層次修為的關鍵丹藥。配方：祖級靈草（如玄陰草）3 枚、靈獸王內丹 1 顆、靈石精華 10 個、稀有木精 2 個。效果：除大幅提升修為外，還可永久增加主動屬性「靈根」1 點與悟性 1 點，並提升全屬性 5%。獲取途徑：極其罕見，只能通過完成頂級宗門任務或秘境試煉取得，且需特殊丹爐或宗門煉丹師協助。</li>
+    </ul>
+    <p>以上內容提供參考，未來版本將逐步開放更多物品、丹藥與裝備，請持續關注更新。</p>
+    <button onclick="showPage('mainMenu')">返回主選單</button>
   </div>
 
 <script>
@@ -140,6 +279,122 @@ const stageNames = [
 // 10層一境
 const GRADE_NAMES = ["入品","下品","中品","上品","極品","超品","絕品","寶品","地品","天品"]; // 保留但不再顯示
 
+// 行動消耗體力值設定
+// 將每個技能對應的體力消耗定義在此物件中，若未定義則默認為0。
+const STAMINA_COST = {
+  train: 5,
+  mine: 10,
+  cutWood: 10,
+  farm: 12,
+  hunt: 15,
+  drawTalisman: 8
+};
+
+// 宗門位階里程碑：根據玩家累積的貢獻度提升宗門位階。
+// 阈值由小到大排列，每達到一個門檻便升至對應位階。
+const SECT_RANK_MILESTONES = [
+  [50, '宗門的基石'],
+  [100, '見習弟子'],
+  [250, '外門雜役'],
+  [500, '外門弟子'],
+  [750, '外門師兄'],
+  [1000, '外門菁英'],
+  [1500, '內門候補'],
+  [2000, '內門弟子'],
+  [3000, '內門師兄'],
+  [4000, '內門菁英'],
+  [5000, '宗門執事'],
+  [6000, '任務堂弟子'],
+  [7000, '傳法堂弟子'],
+  [8000, '煉丹閣弟子'],
+  [9000, '煉器坊弟子'],
+  [10000, '親傳弟子'],
+  [20000, '宗門長老'],
+  [30000, '太上長老'],
+  [40000, '行走的傳說'],
+  [50000, '護道人'],
+  [60000, '代宗主'],
+  [70000, '鎮派老祖'],
+  [80000, '開派祖師'],
+  [90000, '渡劫真仙'],
+  [100000, '飛升之人'],
+  [150000, '人間之神'],
+  [200000, '星界遊神'],
+  [300000, '位面之主'],
+  [400000, '時空旅者'],
+  [500000, '萬古傳說'],
+  [750000, '因果之手'],
+  [1000000, '命運編織者'],
+  [1500000, '規則制定者'],
+  [2000000, '大道之源'],
+  [5000000, '終極造物主']
+];
+
+// 預設 AI 宗門與 AI 玩家，用於未來的宗門互動與競賽。
+// 擴充為20個 AI 宗門名稱，後續可能用於宗門PK等玩法
+const AI_SECTS = [
+  '紫雲宗','青雲門','玄天宗','白玉宮',
+  '赤霞宗','青龍門','天機閣','地照門','風雷山莊',
+  '龍虎山','天劍宗','萬法宗','九華殿','殺戮宮',
+  '佛光寺','逍遙谷','仙霞派','鐵血堂','星月軒','聚寶閣'
+];
+const AI_PLAYERS = ['李逍遙','趙靈兒','林月如','張小凡','陸雪琪','周芷若'];
+
+// 預設 AI 宗門詳細資料：包括名稱、宗門等級、宗門總貢獻與部分成員。
+// 這些數據用於宗門系統介面，模擬 AI 宗門的基本狀態。
+const AI_SECT_DATA = [
+  {
+    name: '紫雲宗',
+    level: 20,
+    contribution: 50000,
+    members: [
+      { name: '李逍遙', level: 30, contribution: 2000 },
+      { name: '趙靈兒', level: 25, contribution: 1500 }
+    ]
+  },
+  {
+    name: '青雲門',
+    level: 18,
+    contribution: 40000,
+    members: [
+      { name: '林月如', level: 20, contribution: 1000 },
+      { name: '張小凡', level: 18, contribution: 800 }
+    ]
+  },
+  {
+    name: '玄天宗',
+    level: 22,
+    contribution: 45000,
+    members: [
+      { name: '陸雪琪', level: 28, contribution: 1800 },
+      { name: '周芷若', level: 26, contribution: 1700 }
+    ]
+  },
+  {
+    name: '白玉宮',
+    level: 25,
+    contribution: 48000,
+    members: []
+  },
+  // 新增AI宗門資料
+  { name: '赤霞宗', level: 15, contribution: 32000, members: [] },
+  { name: '青龍門', level: 17, contribution: 35000, members: [] },
+  { name: '天機閣', level: 23, contribution: 55000, members: [] },
+  { name: '地照門', level: 16, contribution: 30000, members: [] },
+  { name: '風雷山莊', level: 19, contribution: 42000, members: [] },
+  { name: '龍虎山', level: 21, contribution: 47000, members: [] },
+  { name: '天劍宗', level: 24, contribution: 60000, members: [] },
+  { name: '萬法宗', level: 18, contribution: 39000, members: [] },
+  { name: '九華殿', level: 20, contribution: 50000, members: [] },
+  { name: '殺戮宮', level: 22, contribution: 52000, members: [] },
+  { name: '佛光寺', level: 14, contribution: 28000, members: [] },
+  { name: '逍遙谷', level: 16, contribution: 31000, members: [] },
+  { name: '仙霞派', level: 17, contribution: 33000, members: [] },
+  { name: '鐵血堂', level: 19, contribution: 40000, members: [] },
+  { name: '星月軒', level: 21, contribution: 45000, members: [] },
+  { name: '聚寶閣', level: 15, contribution: 29000, members: [] }
+];
+
 let player = {
   name: "",        // 玩家姓名
   gender: "",      // 玩家性別
@@ -147,6 +402,7 @@ let player = {
   exp: 0,
   attributePoints: 10, // 初始可支配點數
   joinedSect: false,   // 是否已加入宗門
+  sectName: "",      // 當前加入的宗門名稱
   resources: { stone: 0, wood: 0, herb: 0, meat: 0, elixir: 0, gear: 0 },
   // 靈石與屬性
   spiritStones: 0,
@@ -154,6 +410,8 @@ let player = {
     // 被動屬性
     hp: 100, maxHp: 100,
     mp: 100, maxMp: 100,
+    // 新增體力值與最大體力值
+    stamina: 100, maxStamina: 100,
     attack: 5, defense: 5,
     speed: 5, luck: 5,
     // 主動屬性
@@ -164,7 +422,9 @@ let player = {
   cultivation: {
     root: 1,
     comprehension: 1,
-    sectRank: "普通弟子"
+    sectRank: "普通弟子",
+    // 玩家對宗門的貢獻度，用於提升宗門位階
+    contribution: 0
   },
   equipment: {
     weapon: null,
@@ -199,6 +459,7 @@ function load() {
       player.gender = player.gender || "";
       player.attributePoints = (player.attributePoints !== undefined) ? player.attributePoints : 10;
       player.joinedSect = player.joinedSect || false;
+      player.sectName = player.sectName || "";
       if (!player.resources) player.resources = {stone:0, wood:0, herb:0, meat:0, elixir:0, gear:0};
       // 確保資源欄位完整
       player.resources.stone = player.resources.stone || 0;
@@ -220,10 +481,13 @@ function load() {
         };
       } else {
         // 確保每個屬性都有值
-        player.stats.hp = player.stats.hp || 100;
-        player.stats.maxHp = player.stats.maxHp || player.stats.hp;
-        player.stats.mp = player.stats.mp || 100;
-        player.stats.maxMp = player.stats.maxMp || player.stats.mp;
+        player.stats.hp = (player.stats.hp !== undefined) ? player.stats.hp : 100;
+        player.stats.maxHp = (player.stats.maxHp !== undefined) ? player.stats.maxHp : player.stats.hp;
+        player.stats.mp = (player.stats.mp !== undefined) ? player.stats.mp : 100;
+        player.stats.maxMp = (player.stats.maxMp !== undefined) ? player.stats.maxMp : player.stats.mp;
+        // 確保體力值存在
+        player.stats.stamina = (player.stats.stamina !== undefined) ? player.stats.stamina : 100;
+        player.stats.maxStamina = (player.stats.maxStamina !== undefined) ? player.stats.maxStamina : player.stats.stamina;
         player.stats.attack = (player.stats.attack !== undefined) ? player.stats.attack : 5;
         player.stats.defense = (player.stats.defense !== undefined) ? player.stats.defense : 5;
         player.stats.speed = (player.stats.speed !== undefined) ? player.stats.speed : 5;
@@ -236,11 +500,12 @@ function load() {
         player.stats.charisma = (player.stats.charisma !== undefined) ? player.stats.charisma : 1;
       }
       if (!player.cultivation) {
-        player.cultivation = {root:1, comprehension:1, sectRank:"普通弟子"};
+        player.cultivation = {root:1, comprehension:1, sectRank:"普通弟子", contribution:0};
       } else {
         player.cultivation.root = player.cultivation.root || 1;
         player.cultivation.comprehension = player.cultivation.comprehension || 1;
         player.cultivation.sectRank = player.cultivation.sectRank || "普通弟子";
+        player.cultivation.contribution = (player.cultivation.contribution !== undefined) ? player.cultivation.contribution : 0;
       }
       if (!player.equipment) {
         player.equipment = {weapon:null, armor:null, accessory:null};
@@ -255,10 +520,23 @@ function load() {
       console.error(err);
     }
   }
-  // 若尚未設定姓名，顯示角色創建面板
+  // 檢查是否已創建角色
   const startPanel = document.getElementById('startPanel');
   if (player.name === "" && startPanel) {
+    // 顯示創建角色面板，隱藏玩家資訊與所有其他頁面
     startPanel.style.display = 'block';
+    const pi = document.getElementById('playerInfo');
+    if (pi) pi.style.display = 'none';
+    // 隱藏所有內容頁面與主選單
+    showPage(null);
+    updateStartPanel();
+  } else {
+    // 若已創建角色，隱藏創建面板並顯示玩家資訊與主選單
+    if (startPanel) startPanel.style.display = 'none';
+    const pi = document.getElementById('playerInfo');
+    if (pi) pi.style.display = 'block';
+    // 預設顯示主選單頁面
+    showPage('mainMenu');
   }
   updateUI();
 }
@@ -271,11 +549,13 @@ function resetGame() {
     exp: 0,
     attributePoints: 10,
     joinedSect: false,
+    sectName: "",
     resources: { stone: 0, wood: 0, herb: 0, meat: 0, elixir: 0, gear: 0 },
     spiritStones: 0,
     stats: {
       hp: 100, maxHp: 100,
       mp: 100, maxMp: 100,
+      stamina: 100, maxStamina: 100,
       attack: 5, defense: 5,
       speed: 5, luck: 5,
       strength: 1, dexterity: 1,
@@ -285,7 +565,8 @@ function resetGame() {
     cultivation: {
       root: 1,
       comprehension: 1,
-      sectRank: "普通弟子"
+      sectRank: "普通弟子",
+      contribution: 0
     },
     equipment: {
       weapon: null,
@@ -299,9 +580,14 @@ function resetGame() {
   };
   currentAction = null; actionEndTime=0;
   save(); updateUI();
-  // 重置後重新顯示角色創建面板
+  // 重置後重新顯示角色創建面板並隱藏所有內容頁面
   const sp = document.getElementById('startPanel');
   if (sp) sp.style.display = 'block';
+  const pi = document.getElementById('playerInfo');
+  if (pi) pi.style.display = 'none';
+  // 隱藏所有頁面，包括主選單
+  showPage(null);
+  updateStartPanel();
 }
 
 function exportSave() {
@@ -355,6 +641,9 @@ function updateUI() {
   // 被動屬性
   document.getElementById('attr_hp').innerText = player.stats.hp;
   document.getElementById('attr_mp').innerText = player.stats.mp;
+  // 體力值顯示
+  const staminaEl = document.getElementById('attr_stamina');
+  if (staminaEl) staminaEl.innerText = player.stats.stamina;
   document.getElementById('attr_attack').innerText = player.stats.attack;
   document.getElementById('attr_defense').innerText = player.stats.defense;
   document.getElementById('attr_speed').innerText = player.stats.speed;
@@ -369,8 +658,14 @@ function updateUI() {
   // 修仙屬性與宗門
   document.getElementById('cult_root').innerText = player.cultivation.root;
   document.getElementById('cult_comprehension').innerText = player.cultivation.comprehension;
-  document.getElementById('cult_sectRank').innerText = player.cultivation.sectRank;
+  // 更新宗門位階依照貢獻度
+  updateSectRank();
+  // 若未加入宗門則顯示散修
+  document.getElementById('cult_sectRank').innerText = player.joinedSect ? player.cultivation.sectRank : '散修';
   document.getElementById('sectStatus').innerText = player.joinedSect ? '已加入' : '未加入';
+  // 更新貢獻度
+  const contribEl = document.getElementById('contribution');
+  if (contribEl) contribEl.innerText = player.cultivation.contribution || 0;
   // 裝備資訊顯示
   document.getElementById('equip_weapon').innerText = player.equipment.weapon || '無';
   document.getElementById('equip_armor').innerText = player.equipment.armor || '無';
@@ -403,6 +698,12 @@ function startAction(type) {
     alert('請先加入宗門才能使用此技能');
     return;
   }
+  // 檢查體力不足，則不允許開始行動
+  const cost = STAMINA_COST[type] || 0;
+  if (player.stats.stamina < cost) {
+    alert('體力不足，無法進行此行動');
+    return;
+  }
   currentAction = type;
   actionEndTime = Date.now() + ACTION_TIME[type]*1000;
   updateUI();
@@ -433,6 +734,13 @@ function finishAction() {
       break;
   }
   player.exp += expGain;
+  // 消耗體力值
+  const cost = STAMINA_COST[currentAction] || 0;
+  player.stats.stamina = Math.max(0, player.stats.stamina - cost);
+  // 若加入宗門則增加貢獻度（以獲得的經驗為基礎）
+  if (player.joinedSect) {
+    player.cultivation.contribution += expGain;
+  }
   // 升級判斷
   while (player.exp >= getExpNeeded(player.level)) {
     player.exp -= getExpNeeded(player.level);
@@ -519,17 +827,43 @@ function recalcPassiveStats() {
   const baseDefense = 5;
   const baseSpeed = 5;
   const baseLuck = 5;
+  const baseStamina = 100;
   // 主動屬性加成
   player.stats.maxHp = baseHp + player.stats.constitution * 10;
   player.stats.hp = Math.min(player.stats.hp, player.stats.maxHp);
   player.stats.maxMp = baseMp + player.stats.intelligence * 10;
   player.stats.mp = Math.min(player.stats.mp, player.stats.maxMp);
+  // 計算體力值：基礎 + 體力屬性影響
+  player.stats.maxStamina = baseStamina + player.stats.constitution * 10;
+  // 初始若沒有體力值則設為最大體力值，否則限制在最大值範圍內
+  if (player.stats.stamina === undefined) {
+    player.stats.stamina = player.stats.maxStamina;
+  } else {
+    player.stats.stamina = Math.min(player.stats.stamina, player.stats.maxStamina);
+  }
   player.stats.attack = baseAttack + player.stats.strength * 2;
   player.stats.defense = baseDefense + player.stats.constitution * 2;
   player.stats.speed = baseSpeed + player.stats.dexterity;
   player.stats.luck = baseLuck + player.stats.charisma;
 }
 
+// 更新角色創建面板的屬性顯示
+function updateStartPanel() {
+  const sp = document.getElementById('startPanel');
+  // 只有當創建面板可見時才更新
+  if (!sp || sp.style.display === 'none') return;
+  const show = function(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.innerText = value;
+  };
+  show('start_attributePoints', player.attributePoints);
+  show('start_attr_strength', player.stats.strength);
+  show('start_attr_dexterity', player.stats.dexterity);
+  show('start_attr_intelligence', player.stats.intelligence);
+  show('start_attr_constitution', player.stats.constitution);
+  show('start_attr_spirit', player.stats.spirit);
+  show('start_attr_charisma', player.stats.charisma);
+}
 // 分配屬性點數到指定主動屬性
 function allocateAttribute(attr) {
   if (player.attributePoints <= 0) {
@@ -542,6 +876,8 @@ function allocateAttribute(attr) {
   // 重新計算被動屬性
   recalcPassiveStats();
   save(); updateUI();
+  // 若在創建角色介面，需同步更新創建面板顯示
+  updateStartPanel();
 }
 
 // 確認角色創建
@@ -553,20 +889,134 @@ function confirmStart() {
     if (el.checked) gender = el.value;
   }
   if (!name) { alert('請輸入姓名'); return; }
+  // 確認所有可支配點數已分配
+  if (player.attributePoints > 0) {
+    alert('請先分配所有屬性點數後開始遊戲');
+    return;
+  }
   player.name = name;
   player.gender = gender;
+  // 隱藏創建面板
   document.getElementById('startPanel').style.display = 'none';
+  // 顯示玩家資訊
+  const pi = document.getElementById('playerInfo');
+  if (pi) pi.style.display = 'block';
+  // 顯示主選單並隱藏其他頁面
+  showPage('mainMenu');
   save(); updateUI();
+}
+
+// 開啟宗門系統介面：根據是否加入宗門顯示相應內容
+function openSectSystem() {
+  // 已廢棄的函式，改為使用 openSectPage() 顯示宗門頁面
+  openSectPage();
+}
+
+// 關閉宗門系統介面
+function closeSectSystem() {
+  // 已廢棄的函式，改為返回主選單
+  showPage('mainMenu');
+}
+
+// 顯示宗門選單：未加入宗門時列出可加入的 AI 宗門供玩家選擇
+function renderSectMenu() {
+  const menuDiv = document.getElementById('sectMenu');
+  const infoDiv = document.getElementById('sectInfo');
+  let html = '';
+  html += '<p>請選擇一個宗門加入：</p>';
+  AI_SECT_DATA.forEach((sect) => {
+    html += `<button onclick="joinAiSect('${sect.name}')">${sect.name}（等級 ${sect.level}，貢獻 ${sect.contribution}）</button><br>`;
+  });
+  html += '<button onclick="showPage(\'mainMenu\')">返回主選單</button>';
+  if (menuDiv) menuDiv.innerHTML = html;
+  if (infoDiv) infoDiv.innerHTML = '';
+}
+
+// 加入指定的 AI 宗門
+function joinAiSect(name) {
+  player.joinedSect = true;
+  player.sectName = name;
+  // 加入宗門後初始位階設為外門弟子
+  player.cultivation.sectRank = '外門弟子';
+  save(); updateUI();
+  renderSectInfo();
+}
+
+// 顯示當前宗門資訊，包括宗門等級、貢獻與成員列表
+function renderSectInfo() {
+  const menuDiv = document.getElementById('sectMenu');
+  const infoDiv = document.getElementById('sectInfo');
+  if (menuDiv) menuDiv.innerHTML = '';
+  if (!player.sectName) {
+    // 若沒有宗門名稱，返回選單
+    renderSectMenu();
+    return;
+  }
+  const sect = AI_SECT_DATA.find(s => s.name === player.sectName) || { level: 1, contribution: 0, members: [] };
+  let html = '';
+  html += `<p><strong>宗門名稱：</strong>${player.sectName}</p>`;
+  html += `<p><strong>宗門等級：</strong>${sect.level}</p>`;
+  html += `<p><strong>宗門總貢獻：</strong>${sect.contribution}</p>`;
+  html += `<p><strong>你的個人貢獻：</strong>${player.cultivation.contribution || 0}</p>`;
+  html += `<p><strong>你的宗門位階：</strong>${player.cultivation.sectRank}</p>`;
+  // 列出成員
+  html += '<p><strong>宗門成員：</strong></p>';
+  html += '<ul>';
+  sect.members.forEach(member => {
+    html += `<li>${member.name} - ${getStage(member.level || 0)} - 貢獻 ${member.contribution}</li>`;
+  });
+  // 加入玩家本人
+  html += `<li>你 - ${getStage(player.level)} - 貢獻 ${player.cultivation.contribution || 0}</li>`;
+  html += '</ul>';
+  html += '<button onclick="showPage(\'mainMenu\')">返回主選單</button>';
+  if (infoDiv) infoDiv.innerHTML = html;
+}
+
+// 根據貢獻度更新宗門位階。
+function updateSectRank() {
+  // 未加入宗門時保持散修
+  if (!player.joinedSect) {
+    player.cultivation.sectRank = '散修';
+    return;
+  }
+  let rank = '外門弟子';
+  for (let i = 0; i < SECT_RANK_MILESTONES.length; i++) {
+    const [threshold, title] = SECT_RANK_MILESTONES[i];
+    if (player.cultivation.contribution >= threshold) {
+      rank = title;
+    } else {
+      break;
+    }
+  }
+  player.cultivation.sectRank = rank;
+}
+
+// 切換修為等級一覽面板
+function toggleLevelOverview() {
+  // 改為切換至修為等級頁面
+  showPage('levelsPage');
+}
+
+// 建立修為等級清單，顯示每個境界及層所需經驗
+function buildLevelList() {
+  const div = document.getElementById('levelList');
+  if (!div) return;
+  div.innerHTML = '';
+  // 只顯示前100層以避免列表過長
+  const maxLevels = Math.min(stageNames.length * 10, 100);
+  for (let lvl = 0; lvl < maxLevels; lvl++) {
+    const p = document.createElement('p');
+    const stageName = getStage(lvl);
+    const expNeed = getExpNeeded(lvl);
+    p.textContent = stageName + '：需要經驗 ' + expNeed;
+    div.appendChild(p);
+  }
 }
 
 // 切換說明面板顯示/隱藏
 function toggleRules() {
-  const el = document.getElementById('gameRules');
-  if (el.style.display === 'none' || el.style.display === '') {
-    el.style.display = 'block';
-  } else {
-    el.style.display = 'none';
-  }
+  // 改為切換至遊戲說明頁面
+  showPage('rulesPage');
 }
 
 // 加入宗門
@@ -584,6 +1034,39 @@ function joinSect() {
 // 商店功能暫時為占位
 function openShop() {
   alert('商店功能尚未開放');
+}
+
+// 新增: 跳轉頁面顯示控制函數
+// showPage 接受頁面ID並顯示該頁，同時隱藏其餘頁面。
+// 傳入 null 或未定義則隱藏所有頁面。
+function showPage(pageId) {
+  const pages = ['mainMenu','skillsPage','sectPage','inventoryPage','shopPage','rulesPage','levelsPage'];
+  pages.forEach(pid => {
+    const el = document.getElementById(pid);
+    if (!el) return;
+    if (pageId === pid) {
+      el.style.display = 'block';
+      // 進入宗門頁面時根據玩家狀態渲染內容
+      if (pid === 'sectPage') {
+        if (!player.joinedSect) {
+          renderSectMenu();
+        } else {
+          renderSectInfo();
+        }
+      }
+      // 進入修為等級頁面時建立等級列表
+      if (pid === 'levelsPage') {
+        buildLevelList();
+      }
+    } else {
+      el.style.display = 'none';
+    }
+  });
+}
+
+// 新增：宗門頁面入口函式，用於開啟宗門頁面
+function openSectPage() {
+  showPage('sectPage');
 }
 
 load(); setInterval(tick, 1000);
