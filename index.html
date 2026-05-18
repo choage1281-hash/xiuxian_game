@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>修仙遊戲 V1-9</title>
+  <title>修仙遊戲 V1-11</title>
 <style>
   body { font-family: sans-serif; padding: 10px; background:#fafafa; }
   h1 { text-align:center; }
@@ -61,10 +61,16 @@
   .skill-note { font-size:.9em; color:#555; margin:-4px 0 8px 0; text-align:center; }
   .sect-feature-grid button { background-color:#0d6efd; }
   .sect-master button { background-color:#6f42c1; }
+
+  /* V1-11 介面優化：卡片陰影、按鈕 hover 與進度條圓角 */
+  .panel { border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  button:hover { filter: brightness(1.08); }
+  .bar-bg { border-radius: 999px; overflow: hidden; }
+  .bar-fill { border-radius: 999px; transition: width .25s ease; }
 </style>
 </head>
 <body>
-  <h1>修仙遊戲 V1-9</h1>
+  <h1>修仙遊戲 V1-11</h1>
   <!-- V1-8 升級音效：使用瀏覽器內建 AudioContext 產生提示音，不需外部音檔 -->
 
   <!-- 玩家資訊面板：遊戲開始後顯示；置頂顯示 -->
@@ -133,6 +139,7 @@
     <button onclick="openSectPage()">宗門系統</button>
     <button onclick="showPage('inventoryPage')">背包</button>
     <button onclick="showPage('shopPage')">商店</button>
+    <button onclick="showPage('dailySignPage')">每日簽到</button>
     <button onclick="showPage('rulesPage')">遊戲說明</button>
     <button onclick="showPage('levelsPage')">查看修為等級一覽表</button>
     <button onclick="resetGame()">重置遊戲</button>
@@ -223,6 +230,17 @@
     <button onclick="showPage('mainMenu')">返回主選單</button>
   </div>
 
+
+  <!-- 每日簽到頁面，預設隱藏 -->
+  <div id="dailySignPage" class="panel" style="display:none">
+    <h3>每日簽到</h3>
+    <p>每日可簽到一次，獲得靈石、體力恢復道具或丹藥等獎勵。</p>
+    <p>目前連續簽到：<span id="dailyStreakText">0</span> 天</p>
+    <p>今日狀態：<span id="dailySignStatus">尚未簽到</span></p>
+    <button onclick="dailySignIn()">進行今日簽到</button>
+    <button onclick="showPage('mainMenu')">返回主選單</button>
+  </div>
+
   <!-- 遊戲說明頁面，預設隱藏 -->
   <div id="rulesPage" class="panel" style="display:none">
     <h3>遊戲說明</h3>
@@ -292,7 +310,7 @@
       <li><strong>結丹丹：</strong>在築基期到頂後使用，協助突破到結丹期。配方：靈獸內丹 1 顆、稀有礦粉 2 份、珍稀靈草（如赤炎草） 1 枚、靈石 5 個。效果：大幅提升修為，並永久增加主動屬性「精神」與「智力」各 1 點，可提高真氣上限及煉丹成功率。獲取途徑：完成宗門高階副本或試煉後才能取得配方，成功率較低，需要高悟性和高煉丹技能。</li>
       <li><strong>元嬰丹：</strong>協助從結丹期突破至元嬰期，是高層次修為的關鍵丹藥。配方：祖級靈草（如玄陰草）3 枚、靈獸王內丹 1 顆、靈石精華 10 個、稀有木精 2 個。效果：除大幅提升修為外，還可永久增加主動屬性「靈根」1 點與悟性 1 點，並提升全屬性 5%。獲取途徑：極其罕見，只能通過完成頂級宗門任務或秘境試煉取得，且需特殊丹爐或宗門煉丹師協助。</li>
     </ul>
-    <p>V1-8新增：經驗值改為進度條顯示；角色升級時會播放升級音效；體力值每5分鐘恢復1點，體力屬性越高，恢復間隔越短。V1-9新增：修練對應修為值，其餘技能各自擁有專屬經驗值與等級；氣血值、真氣值、體力值改為目前值/最大值與血條顯示；商店新增恢復體力值商品，並開放收購礦石、木材、藥材、靈肉、丹藥、靈器、符箓等。宗門系統新增查看仙門位階一覽表、成員列表、宗門排行榜、上貢、兌換貢獻、宗門倉庫、宗門商店、宗門秘境、宗門擂台與創建宗門。宗門位階改為玩家主動消耗貢獻度兌換，兌換需求列於仙門位階一覽表。以上內容提供參考，未來版本將逐步開放更多物品、丹藥與裝備，請持續關注更新。</p>
+    <p>V1-8新增：經驗值改為進度條顯示；角色升級時會播放升級音效；體力值每5分鐘恢復1點，體力屬性越高，恢復間隔越短。V1-9新增：修練對應修為值，其餘技能各自擁有專屬經驗值與等級；V1-10新增：精神直接影響真氣值，背包新增使用道具與刪除功能，仙門位階與修為等級移植自運氣訓練工具4-6，宗門商店開放購買丹藥配方、道具圖稿與宗門專用道具，每日簽到可獲得獎勵；氣血值、真氣值、體力值改為目前值/最大值與血條顯示；商店新增恢復體力值商品，並開放收購礦石、木材、藥材、靈肉、丹藥、靈器、符箓等。宗門系統新增查看仙門位階一覽表、成員列表、宗門排行榜、上貢、兌換貢獻、宗門倉庫、宗門商店、宗門秘境、宗門擂台與創建宗門。宗門位階改為玩家主動消耗貢獻度兌換，兌換需求列於仙門位階一覽表。以上內容提供參考，未來版本將逐步開放更多物品、丹藥與裝備，請持續關注更新。</p>
     <button onclick="showPage('mainMenu')">返回主選單</button>
   </div>
 
@@ -307,6 +325,28 @@ const stageNames = [
   "無極本源","多元彼岸主","原初意志","萬界始祖","終焉創世者",
   "絕對真理","超越唯一","永恆王座"
 ];
+
+const DIFFICULTY_WIN_RATE = {1:90,2:80,3:65,4:50,5:35,6:25,7:15,8:10,9:7,10:5};
+// V1-10：移植運氣訓練工具4-6的修為等級資料
+// V1-11：修仙遊戲專用修為等級資料
+// 凡人境界基礎需求：50、100、250、500、750、1000、1500、2000、3000、4000。
+// 後續境界依照階段倍率遞增；實際所需修為會再依照玩家資質降低。
+const CULTIVATION_BASE_NEEDS = [50, 100, 250, 500, 750, 1000, 1500, 2000, 3000, 4000];
+const CULTIVATION_STAGES = (() => {
+  let stages = [[0, 0, "凡人初入道"]];
+  const stage_names = ["1.凡人", "2.練氣", "3.築基", "4.結丹", "5.元嬰", "6.化神", "7.煉虛", "8.合體", "9.大乘", "10.渡劫", "11.真仙", "12.金仙", "13.太乙金仙", "14.大羅金仙", "15.混元大羅", "16.仙王", "17.仙帝", "18.天尊", "19.祖仙", "20.無上", "21.超脫輪迴", "22.無上極境", "23.混沌無極", "24.大道歸一", "25.宇宙之主", "26.創世真神", "27.界外天尊", "28.混元道尊", "29.始源帝尊", "30.太初聖皇", "31.永恆之神", "32.混沌主宰", "33.萬道歸宗", "34.終極造物主", "35.無限永存者", "36.超維觀察者", "37.超越者", "38.真理化身", "39.虛無之神", "40.界上界主", "41.唯一真神","42.太上道祖","43.永劫不朽","44.無極本源","45.多元彼岸主","46.原初意志", "47.萬界始祖","48.終焉創世者","49.絕對真理","50.超越唯一","51.永恆王座"];
+  let total = 0;
+  stage_names.forEach((stage, stageIndex) => {
+    const multiplier = Math.max(1, Math.pow(2, stageIndex));
+    for (let sub = 1; sub <= 10; sub++) {
+      const need = Math.floor(CULTIVATION_BASE_NEEDS[sub - 1] * multiplier);
+      total += need;
+      stages.push([total, need, `${stage}${sub}層`]);
+    }
+  });
+  return stages;
+})();
+
 // 10層一境
 const GRADE_NAMES = ["入品","下品","中品","上品","極品","超品","絕品","寶品","地品","天品"]; // 保留但不再顯示
 
@@ -375,9 +415,59 @@ const AI_PLAYERS = ['李逍遙','趙靈兒','林月如','張小凡','陸雪琪',
 
 // V1-8 宗門位階兌換表：玩家主動消耗貢獻度兌換位階
 const SECT_RANK_EXCHANGE = [
-  {title:'外門弟子', cost:100}, {title:'外門師兄', cost:300}, {title:'內門弟子', cost:800},
-  {title:'親傳弟子', cost:1500}, {title:'宗門執事', cost:3000}, {title:'宗門長老', cost:8000},
-  {title:'太上長老', cost:20000}, {title:'副宗主', cost:50000}, {title:'宗主', cost:100000}
+  {title:'1.宗門的基石', cost:500},
+  {title:'2.見習弟子', cost:1000},
+  {title:'3.外門雜役', cost:2500},
+  {title:'4.外門弟子', cost:5000},
+  {title:'5.外門師兄', cost:7500},
+  {title:'6.外門菁英', cost:10000},
+  {title:'7.內門候補', cost:15000},
+  {title:'8.內門弟子', cost:20000},
+  {title:'9.內門師兄', cost:30000},
+  {title:'10.內門菁英', cost:40000},
+  {title:'11.宗門執事', cost:50000},
+  {title:'12.任務堂弟子', cost:60000},
+  {title:'13.傳法堂弟子', cost:70000},
+  {title:'14.煉丹閣弟子', cost:80000},
+  {title:'15.煉器坊弟子', cost:90000},
+  {title:'16.親傳弟子', cost:100000},
+  {title:'17.戒律堂執事', cost:120000},
+  {title:'18.藏經閣執事', cost:140000},
+  {title:'19.百草園管事', cost:160000},
+  {title:'20.萬獸山管事', cost:180000},
+  {title:'21.首席大弟子', cost:200000},
+  {title:'22.任務堂長老', cost:250000},
+  {title:'23.傳法堂長老', cost:300000},
+  {title:'24.煉丹閣長老', cost:350000},
+  {title:'25.煉器坊長老', cost:400000},
+  {title:'26.宗門長老', cost:500000},
+  {title:'27.刑法長老', cost:600000},
+  {title:'28.傳功長老', cost:700000},
+  {title:'29.客卿長老', cost:800000},
+  {title:'30.巡山長老', cost:900000},
+  {title:'31.宗門護法', cost:1000000},
+  {title:'32.丹道峰主', cost:1250000},
+  {title:'33.器道峰主', cost:1500000},
+  {title:'34.劍道峰主', cost:1750000},
+  {title:'35.太上長老', cost:2000000},
+  {title:'36.行走的傳說', cost:3500000},
+  {title:'37.護道人', cost:4000000},
+  {title:'38.代宗主', cost:5000000},
+  {title:'39.鎮派老祖', cost:6000000},
+  {title:'40.開派祖師', cost:7000000},
+  {title:'41.渡劫真仙', cost:8000000},
+  {title:'42.飛升之人', cost:9000000},
+  {title:'43.人間之神', cost:10000000},
+  {title:'44.天界行者', cost:12000000},
+  {title:'45.星界遊神', cost:14000000},
+  {title:'46.位面之主', cost:16000000},
+  {title:'47.時空旅者', cost:18000000},
+  {title:'48.萬古傳說', cost:20000000},
+  {title:'49.因果之手', cost:25000000},
+  {title:'50.命運編織者', cost:30000000},
+  {title:'51.規則制定者', cost:40000000},
+  {title:'52.大道之源', cost:50000000},
+  {title:'53.終極造物主', cost:100000000}
 ];
 // V1-8 宗門兌換資源表
 const CONTRIBUTION_EXCHANGE_ITEMS = [
@@ -700,13 +790,23 @@ function importSave(e) {
 }
 
 function getStage(level) {
-  const stageIndex = Math.floor(level / 10);
-  const layer = (level % 10) + 1;
-  const stage = stageNames[Math.min(stageIndex, stageNames.length-1)];
-  return stage + " " + layer + "層";
+  const idx = Math.min(Math.max(0, level), CULTIVATION_STAGES.length - 1);
+  return CULTIVATION_STAGES[idx][2];
+}
+// V1-11：依照玩家資質降低實際所需修為值
+function getCultivationTalentModifier() {
+  const root = player && player.cultivation ? (player.cultivation.root || 1) : 1;
+  const comprehension = player && player.cultivation ? (player.cultivation.comprehension || 1) : 1;
+  // 靈根與悟性都視為資質，資質越高，需求越低；最低保留50%需求，避免過低失衡。
+  const reduction = Math.min(0.5, ((root - 1) * 0.02) + ((comprehension - 1) * 0.02));
+  return 1 - reduction;
+}
+function getBaseExpNeeded(level) {
+  const idx = Math.min(level + 1, CULTIVATION_STAGES.length - 1);
+  return Math.max(1, CULTIVATION_STAGES[idx][1] || 1);
 }
 function getExpNeeded(level) {
-  return 100 + level * 20;
+  return Math.max(1, Math.floor(getBaseExpNeeded(level) * getCultivationTalentModifier()));
 }
 function getGrade(level) {
   const index = Math.min(Math.floor(level/10), GRADE_NAMES.length-1);
@@ -820,7 +920,7 @@ function tick() {
 function finishAction() {
   let expGain = 0;
   switch (currentAction) {
-    case "train": expGain = 10; break;
+    case "train": expGain = 10; alert("修練完成，獲得修為值 +" + expGain); break;
     case "mine": player.resources.stone++; expGain = 0; gainSkillExp('mine', 5); break;
     case "cutWood": player.resources.wood++; expGain = 0; gainSkillExp('cutWood', 6); break;
     case "farm": player.resources.herb++; expGain = 0; gainSkillExp('farm', 6); break;
@@ -969,6 +1069,38 @@ function sellBagItem(name, price) {
 }
 
 // 更新背包內容顯示
+function useBagItem(name) {
+  if (!player.bag || !player.bag.items[name] || player.bag.items[name] <= 0) { alert(name + '不足'); return; }
+  let used = true;
+  if (name.includes('體力丹')) {
+    let gain = name.includes('大') ? 80 : (name.includes('中') ? 30 : 10);
+    player.stats.stamina = Math.min(player.stats.maxStamina, player.stats.stamina + gain);
+    alert('使用' + name + '，恢復體力 ' + gain);
+  } else if (name.includes('丹藥') || name.includes('聚氣丹') || name.includes('練氣丹')) {
+    const gain = 50;
+    player.exp += gain;
+    alert('使用' + name + '，獲得修為值 +' + gain);
+  } else if (name.includes('符')) {
+    player.stats.luck += 1;
+    alert('使用' + name + '，暫時提升運氣 +1（目前以永久加成方式記錄）');
+  } else {
+    used = false;
+    alert(name + '目前尚未設定使用效果');
+  }
+  if (!used) return;
+  player.bag.items[name]--;
+  if (player.bag.items[name] <= 0) delete player.bag.items[name];
+  save(); updateUI();
+}
+
+function deleteBagItem(name) {
+  if (!player.bag || !player.bag.items[name]) return;
+  if (!confirm('確定要刪除 ' + name + ' 嗎？')) return;
+  delete player.bag.items[name];
+  save(); updateUI();
+}
+
+// 更新背包內容顯示
 function updateBagUI() {
   const listEl = document.getElementById('bagList');
   if (!listEl) return;
@@ -983,7 +1115,7 @@ function updateBagUI() {
   } else {
     keys.forEach(name => {
       const li = document.createElement('li');
-      li.innerText = name + '(' + items[name] + ')';
+      li.innerHTML = `<strong>${name}(${items[name]})</strong> <button onclick="useBagItem('${name}')">使用道具</button> <button onclick="deleteBagItem('${name}')">刪除</button>`;
       listEl.appendChild(li);
     });
   }
@@ -1010,7 +1142,7 @@ function showRefine(type) {
       if (addItemToBag('入品丹藥', 1)) {
         gainSkillExp('alchemy', 10);
         player.stats.stamina = Math.max(0, player.stats.stamina - 8);
-        alert("成功煉出丹藥！");
+        alert("成功煉出丹藥！獲得入品丹藥 x1，煉丹經驗 +10");
       }
     } else {
       alert("靈草不足，需要3個");
@@ -1041,7 +1173,7 @@ function recalcPassiveStats() {
   // 主動屬性加成
   player.stats.maxHp = baseHp + player.stats.constitution * 10;
   player.stats.hp = Math.min(player.stats.hp, player.stats.maxHp);
-  player.stats.maxMp = baseMp + player.stats.intelligence * 10;
+  player.stats.maxMp = baseMp + player.stats.spirit * 10;
   player.stats.mp = Math.min(player.stats.mp, player.stats.maxMp);
   // 計算體力值：基礎 + 體力屬性影響
   player.stats.maxStamina = baseStamina + player.stats.constitution * 10;
@@ -1282,7 +1414,22 @@ function exchangeContributionItem(i){
   save(); updateUI(); showContributionExchange();
 }
 function showSectWarehouse(){ const d=document.getElementById('sectDetail'); if(d)d.innerHTML='<h4>宗門倉庫</h4><p>目前可查看宗門資源，未來開放存取材料與裝備。</p>'; }
-function showSectShop(){ const d=document.getElementById('sectDetail'); if(d)d.innerHTML='<h4>宗門商店</h4><p>未來可用貢獻度購買丹藥、武器、裝備、飾品、靈器與符箓。</p>'; }
+function showSectShop(){
+  const d=document.getElementById('sectDetail'); if(!d)return;
+  d.innerHTML='<h4>宗門商店</h4><p>宗門商店主要販售修仙專用物品，與主選單民生商店區隔。</p>'+
+  '<button onclick="buySectShopItem(\'練氣丹配方\',1000)">練氣丹配方（1000貢獻）</button>'+
+  '<button onclick="buySectShopItem(\'築基丹配方\',5000)">築基丹配方（5000貢獻）</button>'+
+  '<button onclick="buySectShopItem(\'符箓圖稿\',800)">符箓圖稿（800貢獻）</button>'+
+  '<button onclick="buySectShopItem(\'初級丹爐\',1500)">初級丹爐（1500貢獻）</button>'+
+  '<button onclick="buySectShopItem(\'煉器圖稿\',1200)">煉器圖稿（1200貢獻）</button>';
+}
+function buySectShopItem(name,cost){
+  if((player.cultivation.contribution||0)<cost){alert('貢獻度不足');return;}
+  player.cultivation.contribution-=cost;
+  addItemToBag(name,1);
+  alert('購買成功：'+name);
+  save(); updateUI(); showSectShop();
+}
 function showSectSecret(){ const d=document.getElementById('sectDetail'); if(d)d.innerHTML='<h4>宗門秘境</h4><p>未來開放宗門秘境挑戰，可獲得高階資源與配方。</p>'; }
 function showSectArena(){ const d=document.getElementById('sectDetail'); if(d)d.innerHTML='<h4>宗門擂台</h4><p>未來開放宗門成員切磋與宗門PK系統。</p>'; }
 function upgradeOwnSect(){ if(!player.isSectMaster){alert('只有宗主可以使用');return;} player.ownSectLevel=(player.ownSectLevel||1)+1; save(); renderSectInfo(); alert('宗門升級成功'); }
@@ -1291,21 +1438,12 @@ function showSectSpecialEvent(){ const d=document.getElementById('sectDetail'); 
 
 // 根據貢獻度更新宗門位階。
 function updateSectRank() {
-  // 未加入宗門時保持散修
+  // V1-10：宗門位階改為玩家主動透過貢獻度兌換，不再自動升階。
   if (!player.joinedSect) {
     player.cultivation.sectRank = '散修';
-    return;
+  } else if (!player.cultivation.sectRank || player.cultivation.sectRank === '散修') {
+    player.cultivation.sectRank = '外門弟子';
   }
-  let rank = '外門弟子';
-  for (let i = 0; i < SECT_RANK_MILESTONES.length; i++) {
-    const [threshold, title] = SECT_RANK_MILESTONES[i];
-    if (player.cultivation.contribution >= threshold) {
-      rank = title;
-    } else {
-      break;
-    }
-  }
-  player.cultivation.sectRank = rank;
 }
 
 // 切換修為等級一覽面板
@@ -1319,15 +1457,15 @@ function buildLevelList() {
   const div = document.getElementById('levelList');
   if (!div) return;
   div.innerHTML = '';
-  // 只顯示前100層以避免列表過長
-  const maxLevels = Math.min(stageNames.length * 10, 100);
-  for (let lvl = 0; lvl < maxLevels; lvl++) {
+  // V1-11：修仙遊戲沒有運氣訓練工具的突破參考門檻，僅顯示每層所需修為值。
+  CULTIVATION_STAGES.forEach((row, idx) => {
+    if (idx === 0) return;
     const p = document.createElement('p');
-    const stageName = getStage(lvl);
-    const expNeed = getExpNeeded(lvl);
-    p.textContent = stageName + '：需要經驗 ' + expNeed;
+    const baseNeed = row[1] || 1;
+    const adjustedNeed = Math.max(1, Math.floor(baseNeed * getCultivationTalentModifier()));
+    p.textContent = row[2] + '：基礎所需修為值 ' + baseNeed + '，目前資質調整後約需 ' + adjustedNeed;
     div.appendChild(p);
-  }
+  });
 }
 
 // 切換說明面板顯示/隱藏
@@ -1353,11 +1491,33 @@ function openShop() {
   alert('商店功能尚未開放');
 }
 
+
+function getTodayString(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function updateDailySignUI(){
+  const streak=document.getElementById('dailyStreakText'); if(streak) streak.innerText=player.dailyStreak||0;
+  const status=document.getElementById('dailySignStatus'); if(status) status.innerText=(player.lastDailySign===getTodayString())?'今日已簽到':'尚未簽到';
+}
+function dailySignIn(){
+  const today=getTodayString();
+  if(player.lastDailySign===today){alert('今日已簽到');return;}
+  player.lastDailySign=today;
+  player.dailyStreak=(player.dailyStreak||0)+1;
+  const stone=20+player.dailyStreak*2;
+  player.spiritStones+=stone;
+  addItemToBag('小體力丹',1);
+  if(player.dailyStreak%7===0) addItemToBag('入品丹藥',1);
+  alert(`簽到成功！獲得靈石 ${stone}、小體力丹 x1${player.dailyStreak%7===0?'、入品丹藥 x1':''}`);
+  save(); updateUI(); updateDailySignUI();
+}
+
 // 新增: 跳轉頁面顯示控制函數
 // showPage 接受頁面ID並顯示該頁，同時隱藏其餘頁面。
 // 傳入 null 或未定義則隱藏所有頁面。
 function showPage(pageId) {
-  const pages = ['mainMenu','skillsPage','sectPage','inventoryPage','shopPage','rulesPage','levelsPage'];
+  const pages = ['mainMenu','skillsPage','sectPage','inventoryPage','shopPage','dailySignPage','rulesPage','levelsPage'];
   pages.forEach(pid => {
     const el = document.getElementById(pid);
     if (!el) return;
@@ -1374,6 +1534,9 @@ function showPage(pageId) {
       // 進入修為等級頁面時建立等級列表
       if (pid === 'levelsPage') {
         buildLevelList();
+      }
+      if (pid === 'dailySignPage') {
+        updateDailySignUI();
       }
     } else {
       el.style.display = 'none';
