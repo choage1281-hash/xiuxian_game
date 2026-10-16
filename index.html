@@ -959,7 +959,8 @@ function startBatch(type, requestedCount) {
   }
   player.stats.stamina -= STAMINA_COST[type] * count;
   const now = Date.now();
-  activeActions.push({ type, count, startTime:now, endTime:now + ACTION_TIME[type] * 1000 });
+  // 批量行動依序執行，總時間為單次時間 × 次數；但只占用一個進行中欄位。
+  activeActions.push({ type, count, startTime:now, endTime:now + ACTION_TIME[type] * count * 1000 });
   save(); updateUI();
 }
 
