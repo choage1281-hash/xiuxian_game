@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>修仙遊戲 V1-11</title>
+  <title>修仙遊戲 V1-12</title>
 <style>
   body { font-family: sans-serif; padding: 10px; background:#fafafa; }
   h1 { text-align:center; }
@@ -67,10 +67,28 @@
   button:hover { filter: brightness(1.08); }
   .bar-bg { border-radius: 999px; overflow: hidden; }
   .bar-fill { border-radius: 999px; transition: width .25s ease; }
+  /* V1-12：技能卡、批量控制與多線進行中欄位 */
+  body { max-width: 1100px; margin: 0 auto; color:#243042; background:linear-gradient(135deg,#f5f8ff,#f8fbf5); }
+  h1 { color:#314c78; letter-spacing:.08em; }
+  .skills-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); gap:12px; }
+  .skill-card { padding:14px; border:1px solid #dce6f4; border-radius:12px; background:#fff; box-shadow:0 3px 12px rgba(45,75,120,.08); }
+  .skill-card h4 { margin:0 0 6px; color:#245b99; }
+  .skill-card p { margin:0 0 10px; color:#68758a; font-size:.9em; }
+  .batch-controls { display:flex; gap:6px; align-items:center; }
+  .batch-controls input { width:58px; padding:8px 5px; border:1px solid #b8c9df; border-radius:6px; text-align:center; }
+  .batch-controls button { flex:1; margin:0 !important; padding:9px !important; }
+  .batch-max { background:#eef4fb !important; color:#245b99 !important; border:1px solid #b8c9df !important; }
+  .action-slots { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px; margin-top:8px; }
+  .action-slot { padding:10px; border-radius:8px; border:1px dashed #b5c8e0; background:#f8fbff; }
+  .action-slot.busy { border-style:solid; border-color:#78a6d6; background:#eef6ff; }
+  .action-progress { height:6px; background:#dce8f5; border-radius:99px; overflow:hidden; margin-top:7px; }
+  .action-progress > span { display:block; height:100%; background:#3d8be0; transition:width .3s; }
+  .batch-hint { margin:0 0 10px; color:#52647c; font-size:.9em; }
+  @media (max-width:600px) { .exp-wrap,.stat-wrap { width:135px; } .panel { padding:9px; } }
 </style>
 </head>
 <body>
-  <h1>修仙遊戲 V1-11</h1>
+  <h1>修仙遊戲 V1-12</h1>
   <!-- V1-8 升級音效：使用瀏覽器內建 AudioContext 產生提示音，不需外部音檔 -->
 
   <!-- 玩家資訊面板：遊戲開始後顯示；置頂顯示 -->
@@ -170,20 +188,17 @@
 
   <!-- 技能頁面，包含技能按鈕與行動狀態，並提供返回主選單的按鈕 -->
   <div id="skillsPage" style="display:none">
-    <div class="panel actions">
-      <button onclick="startAction('train')">修練</button><div class="skill-note">消耗體力：5</div>
-      <button onclick="startAction('mine')">採礦</button><div class="skill-note">消耗體力：10</div>
-      <button onclick="startAction('cutWood')">砍柴</button><div class="skill-note">消耗體力：10</div>
-      <button onclick="startAction('farm')">種田</button><div class="skill-note">消耗體力：12</div>
-      <button onclick="startAction('hunt')">狩獵</button><div class="skill-note">消耗體力：15</div>
-      <button onclick="showRefine('pill')">煉丹</button><div class="skill-note">消耗體力：8（製作時）</div>
-      <button onclick="showRefine('gear')">煉器</button><div class="skill-note">消耗體力：8（製作時）</div>
-      <button onclick="startAction('drawTalisman')">畫符</button><div class="skill-note">消耗體力：8</div>
+    <div class="panel">
+      <h3>技能與批量操作</h3>
+      <p class="batch-hint">輸入次數後開始；「最大」會依目前體力自動帶入可進行次數。煉丹、煉器另受材料數量限制。</p>
+      <div class="skills-grid" id="skillsGrid"></div>
     </div>
-    <!-- 行動狀態顯示 -->
+    <!-- V1-12：大境界解鎖的多個行動欄位 -->
     <div class="panel" id="currentPanel">
-      <strong>進行中：</strong><span id="currentAction">無</span>
-      <span id="actionTimer" class="timer"></span>
+      <strong>進行中欄位：</strong><span id="actionSlotSummary">1 / 1</span>
+      <div class="action-slots" id="actionSlots"></div>
+      <!-- 相容舊版程式的隱藏節點 -->
+      <span id="currentAction" style="display:none">無</span><span id="actionTimer" style="display:none"></span>
     </div>
     <!-- V1-9 新增：各技能專屬等級與經驗值 -->
     <div class="skill-exp-list" id="skillExpList"></div>
@@ -246,6 +261,7 @@
     <h3>遊戲說明</h3>
     <p>本遊戲為修仙模擬養成，所有玩家在開始旅程前，<strong>必須創建角色</strong>並完成屬性點分配。請在角色創建頁中輸入姓名、選擇性別，並使用初始的「屬性可支配點數」分配至<strong>力量、敏捷、智力、體力、精神、魅力</strong>等主動屬性。<br>遊戲開始時僅顯示角色創建與屬性分配介面，創建完成後才會顯示玩家資訊、技能按鈕、進行中狀態與背包等面板。起始氣血值與真氣值均為 100，體力值（體力）為 100。攻擊、防禦、速度、運氣為被動屬性，初始各為 5 點；主動屬性初始各為 1 點，主動屬性將影響被動屬性與最大氣血值、真氣值、體力值。</p>
     <p>每次行動會消耗體力值；體力值不足時無法進行行動。隨著修為提升、使用丹藥或休息可恢復體力值。</p>
+    <p><strong>V1-12 批量操作：</strong>所有技能均可輸入批量次數；系統會以目前體力為上限，按「最大」可自動填入可進行次數。煉丹與煉器還會檢查材料是否足夠。初始有 1 個進行中欄位，每進入一個新的大境界（每 10 個小層）便增加 1 個欄位，可同時處理多項計時技能。</p>
     <p>除了<strong>修練</strong>外，其餘技能需加入宗門後才能使用。未加入宗門的玩家被稱為<strong>散修</strong>。加入後，行動所獲得的經驗將轉化為<strong>貢獻度</strong>，貢獻度可提升你的<strong>宗門位階</strong>（散修 → 外門弟子 → 內門弟子 → 長老……），具體階位請參考「運氣訓練工具」中的宗門位階列表。你可以選擇加入預設的 AI 宗門（目前共有 20 個，例如紫雲宗、青雲門、玄天宗、白玉宮等），或在未來達到條件後自行創建宗門。未來版本還可能開放宗門 PK 系統，敬請期待。</p>
     <p>背包初始有 10 格，相同物品可疊加，例如「入品丹藥(10)」。日後可透過「儲物袋」提升背包空間。</p>
     <p>點擊「查看修為等級一覽」可查看每個境界與小層所需的經驗值；點擊「宗門系統」可查看或加入宗門；點擊「遊戲說明」可再次閱讀本說明。</p>
@@ -592,7 +608,9 @@ let player = {
     items: {}
   }
 };
-let currentAction = null;
+// V1-12：每跨入一個大境界（10 個小層）增加一個可同時進行的行動欄位。
+let activeActions = [];
+let currentAction = null; // 保留給舊存檔／舊介面相容使用
 let actionEndTime = 0;
 const ACTION_TIME = {train:10, mine:15, farm:20, hunt:25, drawTalisman:20}; // 時間秒數，新增畫符
 // 新增砍柴技能時間
@@ -754,7 +772,7 @@ function resetGame() {
       items: {}
     }
   };
-  currentAction = null; actionEndTime=0;
+  activeActions = []; currentAction = null; actionEndTime=0;
   save(); updateUI();
   // 重置後重新顯示角色創建面板並隱藏所有內容頁面
   const sp = document.getElementById('startPanel');
@@ -811,6 +829,46 @@ function getExpNeeded(level) {
 function getGrade(level) {
   const index = Math.min(Math.floor(level/10), GRADE_NAMES.length-1);
   return GRADE_NAMES[index];
+}
+
+const ACTION_LABELS = { train:'修練', mine:'採礦', cutWood:'砍柴', farm:'種田', hunt:'狩獵', drawTalisman:'畫符', pill:'煉丹', gear:'煉器' };
+const SKILL_CARDS = [
+  ['train','修練','獲得修為值'], ['mine','採礦','獲得礦石'], ['cutWood','砍柴','獲得木材'],
+  ['farm','種田','獲得靈草'], ['hunt','狩獵','獲得獸肉'], ['drawTalisman','畫符','獲得符咒'],
+  ['pill','煉丹','3 靈草 → 入品丹藥'], ['gear','煉器','2 礦石＋2 獸肉 → 裝備']
+];
+function getActionSlotCount() { return 1 + Math.floor((player.level || 0) / 10); }
+function getMaxBatch(type) {
+  const byStamina = Math.floor((player.stats.stamina || 0) / (STAMINA_COST[type] || 1));
+  if (type === 'pill') return Math.min(byStamina, Math.floor((player.resources.herb || 0) / 3));
+  if (type === 'gear') return Math.min(byStamina, Math.floor((player.resources.stone || 0) / 2), Math.floor((player.resources.meat || 0) / 2));
+  return byStamina;
+}
+function renderSkillsGrid() {
+  const grid = document.getElementById('skillsGrid');
+  if (!grid) return;
+  grid.innerHTML = SKILL_CARDS.map(([type, name, result]) => `<div class="skill-card"><h4>${name}</h4><p>${result} · 體力 ${STAMINA_COST[type]}</p><div class="batch-controls"><input id="batch_${type}" type="number" min="1" value="1" aria-label="${name}次數"><button class="batch-max" onclick="fillMaxBatch('${type}')">最大</button><button onclick="startBatch('${type}')">開始</button></div></div>`).join('');
+}
+function fillMaxBatch(type) {
+  const input = document.getElementById('batch_' + type);
+  if (input) input.value = Math.max(1, getMaxBatch(type));
+}
+function renderActionSlots() {
+  const slots = document.getElementById('actionSlots');
+  const summary = document.getElementById('actionSlotSummary');
+  if (!slots) return;
+  const total = getActionSlotCount();
+  if (summary) summary.textContent = `${activeActions.length} / ${total}`;
+  let html = '';
+  for (let i = 0; i < total; i++) {
+    const action = activeActions[i];
+    if (!action) { html += `<div class="action-slot"><strong>欄位 ${i + 1}</strong><br>空閒中</div>`; continue; }
+    const remaining = Math.max(0, action.endTime - Date.now());
+    const elapsed = Math.max(0, Date.now() - action.startTime);
+    const percent = Math.min(100, Math.floor(elapsed / (action.endTime - action.startTime) * 100));
+    html += `<div class="action-slot busy"><strong>欄位 ${i + 1} · ${ACTION_LABELS[action.type]}</strong><br>批量 ${action.count} 次 · 剩餘 ${Math.ceil(remaining / 1000)} 秒<div class="action-progress"><span style="width:${percent}%"></span></div></div>`;
+  }
+  slots.innerHTML = html;
 }
 
 function updateUI() {
@@ -877,66 +935,55 @@ function updateUI() {
       span.innerText = resourceNames[res] + '：' + player.resources[res];
     }
   }
-  // 當前行動顯示
-  document.getElementById('currentAction').innerText = currentAction ? {
-    train: '修練',
-    mine: '採礦',
-    cutWood: '砍柴',
-    farm: '種田',
-    hunt: '狩獵',
-    drawTalisman: '畫符'
-  }[currentAction] : '無';
+  renderSkillsGrid();
+  renderActionSlots();
   // 更新背包顯示
   updateBagUI();
 }
-function startAction(type) {
-  // 如果已有行動，禁止新的行動
-  if (currentAction) { alert("已有進行中的行動"); return; }
+function startAction(type) { startBatch(type, 1); }
+function startBatch(type, requestedCount) {
+  const input = document.getElementById('batch_' + type);
+  const count = Math.floor(Number(requestedCount || (input && input.value) || 1));
+  if (!Number.isFinite(count) || count < 1) { alert('請輸入至少 1 次'); return; }
+  if (type === 'pill' || type === 'gear') { startRefineBatch(type, count); return; }
+  if (activeActions.length >= getActionSlotCount()) { alert(`進行中欄位已滿（目前可同時進行 ${getActionSlotCount()} 項）`); return; }
   // 檢查宗門條件，修練之外的技能需加入宗門
   if (type !== 'train' && !player.joinedSect) {
     alert('請先加入宗門才能使用此技能');
     return;
   }
-  // 檢查體力不足，則不允許開始行動
-  const cost = STAMINA_COST[type] || 0;
-  if (player.stats.stamina < cost) {
-    alert('體力不足，無法進行此行動');
+  const max = getMaxBatch(type);
+  if (count > max) {
+    alert(`體力不足；${ACTION_LABELS[type]}目前最多可批量進行 ${max} 次`);
     return;
   }
-  currentAction = type;
-  actionEndTime = Date.now() + ACTION_TIME[type]*1000;
-  updateUI();
+  player.stats.stamina -= STAMINA_COST[type] * count;
+  const now = Date.now();
+  activeActions.push({ type, count, startTime:now, endTime:now + ACTION_TIME[type] * 1000 });
+  save(); updateUI();
 }
 
 function tick() {
-  if (currentAction) {
-    const remaining = Math.max(0, actionEndTime - Date.now());
-    document.getElementById('actionTimer').innerText = "（剩餘 "+ Math.ceil(remaining/1000) + "秒）";
-    if (remaining <= 0) finishAction();
-  } else {
-    document.getElementById('actionTimer').innerText = "";
-  }
+  const ready = activeActions.filter(action => action.endTime <= Date.now());
+  ready.forEach(finishAction);
+  if (activeActions.length) renderActionSlots();
 }
-function finishAction() {
+function finishAction(action) {
+  if (!action) return;
+  const count = action.count || 1;
   let expGain = 0;
-  switch (currentAction) {
-    case "train": expGain = 10; alert("修練完成，獲得修為值 +" + expGain); break;
-    case "mine": player.resources.stone++; expGain = 0; gainSkillExp('mine', 5); break;
-    case "cutWood": player.resources.wood++; expGain = 0; gainSkillExp('cutWood', 6); break;
-    case "farm": player.resources.herb++; expGain = 0; gainSkillExp('farm', 6); break;
-    case "hunt": player.resources.meat++; expGain = 0; gainSkillExp('hunt', 8); break;
+  switch (action.type) {
+    case "train": expGain = 10 * count; break;
+    case "mine": player.resources.stone += count; gainSkillExp('mine', 5 * count); break;
+    case "cutWood": player.resources.wood += count; gainSkillExp('cutWood', 6 * count); break;
+    case "farm": player.resources.herb += count; gainSkillExp('farm', 6 * count); break;
+    case "hunt": player.resources.meat += count; gainSkillExp('hunt', 8 * count); break;
     case "drawTalisman":
       // 畫符產生符咒物品
-      if (addItemToBag('符咒', 1)) {
-        expGain = 0;
-        gainSkillExp('drawTalisman', 4);
-      }
+      if (addItemToBag('符咒', count)) gainSkillExp('drawTalisman', 4 * count);
       break;
   }
   player.exp += expGain;
-  // 消耗體力值
-  const cost = STAMINA_COST[currentAction] || 0;
-  player.stats.stamina = Math.max(0, player.stats.stamina - cost);
   // 若加入宗門則增加貢獻度（以獲得的經驗為基礎）
   if (player.joinedSect) {
     player.cultivation.contribution += expGain;
@@ -950,7 +997,8 @@ function finishAction() {
     // V1-8 角色升級時播放升級音效
     playLevelUpSound();
   }
-  currentAction = null;
+  activeActions = activeActions.filter(item => item !== action);
+  alert(`${ACTION_LABELS[action.type]}批量 ${count} 次完成！` + (expGain ? ` 獲得修為值 +${expGain}` : ''));
   save(); updateUI();
 }
 
@@ -1123,41 +1171,28 @@ function updateBagUI() {
   if (capEl) capEl.innerText = player.bag.capacity;
 }
 
-function showRefine(type) {
-  // 未加入宗門不能煉丹/煉器
-  if (!player.joinedSect) {
-    alert('請先加入宗門才能使用煉丹或煉器');
+function showRefine(type) { startBatch(type, 1); }
+function startRefineBatch(type, count) {
+  if (!player.joinedSect) { alert('請先加入宗門才能使用煉丹或煉器'); return; }
+  const max = getMaxBatch(type);
+  if (count > max || max < 1) {
+    const material = type === 'pill' ? '靈草（每次 3 個）' : '礦石與獸肉（每次各 2 個）';
+    alert(`無法批量製作 ${count} 次；請確認體力與${material}是否足夠，目前最多 ${max} 次。`);
     return;
   }
-  const cost = STAMINA_COST[type] || 0;
-  if (player.stats.stamina < cost) {
-    alert('體力不足，無法進行此製作');
-    return;
+  if (type === 'pill' && !addItemToBag('入品丹藥', count)) return;
+  if (type === 'pill') {
+    player.resources.herb -= 3 * count;
+    gainSkillExp('alchemy', 10 * count);
+  } else {
+    player.resources.stone -= 2 * count;
+    player.resources.meat -= 2 * count;
+    player.resources.gear += count;
+    gainSkillExp('forging', 10 * count);
   }
-  player.stats.stamina = Math.max(0, player.stats.stamina - cost);
-  if (type==="pill") {
-    if (player.resources.herb>=3) {
-      player.resources.herb-=3;
-      // 煉丹生成入品丹藥並放入背包
-      if (addItemToBag('入品丹藥', 1)) {
-        gainSkillExp('alchemy', 10);
-        player.stats.stamina = Math.max(0, player.stats.stamina - 8);
-        alert("成功煉出丹藥！獲得入品丹藥 x1，煉丹經驗 +10");
-      }
-    } else {
-      alert("靈草不足，需要3個");
-    }
-  }
-  if (type==="gear") {
-    if (player.resources.stone>=2 && player.resources.meat>=2) {
-      player.resources.stone-=2; player.resources.meat-=2;
-      player.resources.gear++;
-      gainSkillExp('forging', 10);
-      player.stats.stamina = Math.max(0, player.stats.stamina - 8);
-      alert("煉器成功！");
-    } else alert("礦石與獸肉不足，需要2個礦石與2個獸肉");
-  }
+  player.stats.stamina -= STAMINA_COST[type] * count;
   save(); updateUI();
+  alert(`${ACTION_LABELS[type]}批量完成：${count} 次。`);
 }
 
 // 計算被動屬性：根據主動屬性更新攻擊、防禦、速度、運氣和最大HP/MP
