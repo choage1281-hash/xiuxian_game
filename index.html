@@ -130,6 +130,13 @@
     <strong>裝備-武器：</strong><span id="equip_weapon">無</span><br>
     <strong>裝備-盔甲：</strong><span id="equip_armor">無</span><br>
     <strong>裝備-飾品：</strong><span id="equip_accessory">無</span>
+    <!-- V1-12：常駐於玩家資訊底部，方便隨時查看任務進度 -->
+    <div id="currentPanel" style="margin-top:12px; padding-top:10px; border-top:1px solid #dce6f4;">
+      <strong>進行中欄位：</strong><span id="actionSlotSummary">1 / 1</span>
+      <div class="action-slots" id="actionSlots"></div>
+      <!-- 相容舊版程式的隱藏節點 -->
+      <span id="currentAction" style="display:none">無</span><span id="actionTimer" style="display:none"></span>
+    </div>
   </div>
   <!-- 角色創建面板：輸入姓名與選擇性別，在開始遊戲前顯示 -->
   <div id="startPanel" class="panel" style="display:none">
@@ -193,13 +200,6 @@
       <p class="batch-hint">輸入次數後開始；「最大」會依目前體力自動帶入可進行次數。煉丹、煉器另受材料數量限制。</p>
       <div class="skills-grid" id="skillsGrid"></div>
     </div>
-    <!-- V1-12：大境界解鎖的多個行動欄位 -->
-    <div class="panel" id="currentPanel">
-      <strong>進行中欄位：</strong><span id="actionSlotSummary">1 / 1</span>
-      <div class="action-slots" id="actionSlots"></div>
-      <!-- 相容舊版程式的隱藏節點 -->
-      <span id="currentAction" style="display:none">無</span><span id="actionTimer" style="display:none"></span>
-    </div>
     <!-- V1-9 新增：各技能專屬等級與經驗值 -->
     <div class="skill-exp-list" id="skillExpList"></div>
     <button onclick="showPage('mainMenu')">返回主選單</button>
@@ -261,7 +261,7 @@
     <h3>遊戲說明</h3>
     <p>本遊戲為修仙模擬養成，所有玩家在開始旅程前，<strong>必須創建角色</strong>並完成屬性點分配。請在角色創建頁中輸入姓名、選擇性別，並使用初始的「屬性可支配點數」分配至<strong>力量、敏捷、智力、體力、精神、魅力</strong>等主動屬性。<br>遊戲開始時僅顯示角色創建與屬性分配介面，創建完成後才會顯示玩家資訊、技能按鈕、進行中狀態與背包等面板。起始氣血值與真氣值均為 100，體力值（體力）為 100。攻擊、防禦、速度、運氣為被動屬性，初始各為 5 點；主動屬性初始各為 1 點，主動屬性將影響被動屬性與最大氣血值、真氣值、體力值。</p>
     <p>每次行動會消耗體力值；體力值不足時無法進行行動。隨著修為提升、使用丹藥或休息可恢復體力值。</p>
-    <p><strong>V1-12 批量操作：</strong>所有技能均可輸入批量次數；系統會以目前體力為上限，按「最大」可自動填入可進行次數。煉丹與煉器還會檢查材料是否足夠。初始有 1 個進行中欄位，每進入一個新的大境界（每 10 個小層）便增加 1 個欄位，可同時處理多項計時技能。</p>
+    <p><strong>V1-12 批量操作：</strong>所有技能均可輸入批量次數；系統會以目前體力為上限，按「最大」可自動填入可進行次數。煉丹與煉器還會檢查材料是否足夠。初始有 1 個進行中欄位，每進入一個新的大境界（每 10 個小層）便增加 1 個欄位，可同時處理多項計時技能。進行中的任務會保留開始與結束時間，重新整理頁面後會繼續倒數並在時間到時結算。</p>
     <p>除了<strong>修練</strong>外，其餘技能需加入宗門後才能使用。未加入宗門的玩家被稱為<strong>散修</strong>。加入後，行動所獲得的經驗將轉化為<strong>貢獻度</strong>，貢獻度可提升你的<strong>宗門位階</strong>（散修 → 外門弟子 → 內門弟子 → 長老……），具體階位請參考「運氣訓練工具」中的宗門位階列表。你可以選擇加入預設的 AI 宗門（目前共有 20 個，例如紫雲宗、青雲門、玄天宗、白玉宮等），或在未來達到條件後自行創建宗門。未來版本還可能開放宗門 PK 系統，敬請期待。</p>
     <p>背包初始有 10 格，相同物品可疊加，例如「入品丹藥(10)」。日後可透過「儲物袋」提升背包空間。</p>
     <p>點擊「查看修為等級一覽」可查看每個境界與小層所需的經驗值；點擊「宗門系統」可查看或加入宗門；點擊「遊戲說明」可再次閱讀本說明。</p>
@@ -618,6 +618,8 @@ ACTION_TIME.cutWood = 15;
 
 function save() {
   localStorage.setItem("xiuxian_v1_save", JSON.stringify(player));
+  // V1-12：計時中的任務獨立保存，重新整理頁面後仍可依原結束時間繼續倒數。
+  localStorage.setItem("xiuxian_v1_active_actions", JSON.stringify(activeActions));
 }
 
 function load() {
@@ -704,6 +706,16 @@ function load() {
       console.error(err);
     }
   }
+  // 還原進行中的任務。只接受完整、可辨識的任務資料，避免舊版或損壞存檔造成畫面異常。
+  try {
+    const savedActions = JSON.parse(localStorage.getItem("xiuxian_v1_active_actions") || '[]');
+    activeActions = Array.isArray(savedActions) ? savedActions.filter(action =>
+      action && ACTION_LABELS[action.type] && Number.isFinite(action.count) && action.count > 0 &&
+      Number.isFinite(action.startTime) && Number.isFinite(action.endTime)
+    ) : [];
+  } catch (err) {
+    activeActions = [];
+  }
   // 檢查是否已創建角色
   const startPanel = document.getElementById('startPanel');
   if (player.name === "" && startPanel) {
@@ -773,6 +785,7 @@ function resetGame() {
     }
   };
   activeActions = []; currentAction = null; actionEndTime=0;
+  localStorage.removeItem("xiuxian_v1_active_actions");
   save(); updateUI();
   // 重置後重新顯示角色創建面板並隱藏所有內容頁面
   const sp = document.getElementById('startPanel');
@@ -801,7 +814,8 @@ function importSave(e) {
   reader.onload = () => {
     try {
       const data = JSON.parse(reader.result);
-      player = data; save(); updateUI();
+      // 匯入角色存檔時不帶入舊頁面的計時任務，避免重複結算。
+      player = data; activeActions = []; save(); updateUI();
     } catch(err) { alert("檔案格式錯誤"); }
   };
   reader.readAsText(file);
