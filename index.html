@@ -1247,9 +1247,9 @@ function buyShopItem(itemKey) {
   const item = items[itemKey];
   if (!item) return;
   if (player.spiritStones < item.cost) { alert('靈石不足'); return; }
+  if (!addItemToBag(item.name, 1)) return;
   player.spiritStones -= item.cost;
-  player.stats.stamina = Math.min(player.stats.maxStamina, player.stats.stamina + item.stamina);
-  alert(`購買${item.name}成功，恢復體力 ${item.stamina}`);
+  alert(`購買${item.name}成功，已放入背包。`);
   save(); updateUI();
 }
 
@@ -1275,26 +1275,34 @@ function sellBagItem(name, price) {
 }
 
 // 更新背包內容顯示
-function useBagItem(name) {
+function useBagItem(name, requestedCount) {
   if (!player.bag || !player.bag.items[name] || player.bag.items[name] <= 0) { alert(name + '不足'); return; }
+  const owned = player.bag.items[name];
+  let count = Math.max(1, Math.floor(Number(requestedCount) || 1));
+  count = Math.min(count, owned);
   let used = true;
   if (name.includes('體力丹')) {
-    let gain = name.includes('大') ? 80 : (name.includes('中') ? 30 : 10);
-    player.stats.stamina = Math.min(player.stats.maxStamina, player.stats.stamina + gain);
-    alert('使用' + name + '，恢復體力 ' + gain);
+    const gain = name.includes('大') ? 80 : (name.includes('中') ? 30 : 10);
+    const missing = Math.max(0, player.stats.maxStamina - player.stats.stamina);
+    if (missing <= 0) { alert('體力已達上限，無法使用' + name + '。'); return; }
+    // 最後一顆允許只補足剩餘體力，絕不超過最大值。
+    count = Math.min(count, Math.ceil(missing / gain));
+    const restored = Math.min(missing, count * gain);
+    player.stats.stamina += restored;
+    alert(`使用${name} ${count} 個，恢復體力 ${restored}。`);
   } else if (name.includes('丹藥') || name.includes('聚氣丹') || name.includes('練氣丹')) {
-    const gain = 50;
+    const gain = 50 * count;
     player.exp += gain;
-    alert('使用' + name + '，獲得修為值 +' + gain);
+    alert(`使用${name} ${count} 個，獲得修為值 +${gain}`);
   } else if (name.includes('符')) {
-    player.stats.luck += 1;
-    alert('使用' + name + '，暫時提升運氣 +1（目前以永久加成方式記錄）');
+    player.stats.luck += count;
+    alert(`使用${name} ${count} 個，暫時提升運氣 +${count}（目前以永久加成方式記錄）`);
   } else {
     used = false;
     alert(name + '目前尚未設定使用效果');
   }
   if (!used) return;
-  player.bag.items[name]--;
+  player.bag.items[name] -= count;
   if (player.bag.items[name] <= 0) delete player.bag.items[name];
   save(); updateUI();
 }
@@ -1321,7 +1329,18 @@ function updateBagUI() {
   } else {
     keys.forEach(name => {
       const li = document.createElement('li');
-      li.innerHTML = `<strong>${name}(${items[name]})</strong> <button onclick="useBagItem('${name}')">使用道具</button> <button onclick="deleteBagItem('${name}')">刪除</button>`;
+      const title = document.createElement('strong');
+      title.textContent = `${name} (${items[name]}) `;
+      const quantity = document.createElement('input');
+      quantity.type = 'number'; quantity.min = '1'; quantity.max = String(items[name]); quantity.value = '1';
+      quantity.setAttribute('aria-label', `${name}使用數量`); quantity.style.width = '58px';
+      const useButton = document.createElement('button');
+      useButton.textContent = '批量使用';
+      useButton.onclick = () => useBagItem(name, quantity.value);
+      const deleteButton = document.createElement('button');
+      deleteButton.textContent = '刪除';
+      deleteButton.onclick = () => deleteBagItem(name);
+      li.append(title, quantity, useButton, deleteButton);
       listEl.appendChild(li);
     });
   }
