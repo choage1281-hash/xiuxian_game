@@ -299,7 +299,7 @@
     <p><strong>V1-12 批量操作：</strong>所有技能均可輸入批量次數；系統會以目前體力為上限，按「最大」可自動填入可進行次數。煉丹與煉器還會檢查材料是否足夠。初始有 1 個進行中欄位，每進入一個新的大境界（每 10 個小層）便增加 1 個欄位，可同時處理多項計時技能。進行中的任務會保留開始與結束時間，重新整理頁面後會繼續倒數並在時間到時結算。</p>
     <p>除了<strong>修練</strong>外，其餘技能需加入宗門後才能使用。未加入宗門的玩家被稱為<strong>散修</strong>。加入後，行動所獲得的經驗將轉化為<strong>貢獻度</strong>，貢獻度可提升你的<strong>宗門位階</strong>（散修 → 外門弟子 → 內門弟子 → 長老……），具體階位請參考「運氣訓練工具」中的宗門位階列表。你可以選擇加入預設的 AI 宗門（目前共有 20 個，例如紫雲宗、青雲門、玄天宗、白玉宮等），或在未來達到條件後自行創建宗門。未來版本還可能開放宗門 PK 系統，敬請期待。</p>
     <p>背包初始有 10 格，相同物品可疊加，例如「入品丹藥(10)」。每項物品都會標示用途，可輸入數量批量使用。商店購買的體力丹會先進入背包；丹藥賣出價格固定為買入價的一半，奇數價格無條件捨去。</p>
-    <p><strong>大境界突破與雷劫：</strong>每完成一個境界的十個小層後，下一個大境界必須使用對應丹藥並渡過天道雷劫：凡人→練氣使用練氣丹、練氣→築基使用築基丹、築基→結丹使用結丹丹，後續依此類推。靈根越高，需要的丹藥越少、雷劫成功率越高；境界越高，丹藥的煉製材料與體力消耗越高。雷劫失敗時會消耗丹藥，但不會提升境界。</p>
+    <p><strong>煉丹、突破與雷劫：</strong>煉丹等級決定可煉製的最高品階，但已解鎖的低階丹藥仍可繼續煉製；例如煉丹 Lv.10 可煉製築基丹與全部較低階丹藥。每次煉丹都會依煉丹等級計算成功率，失敗會消耗材料。聚氣丹等一般丹藥不需要配方；大境界突破丹則每煉製一枚都要消耗一張對應配方與材料。每完成一個境界的十個小層後，下一個大境界必須使用對應丹藥並渡過天道雷劫：凡人→練氣使用練氣丹、練氣→築基使用築基丹、築基→結丹使用結丹丹，後續依此類推。靈根越高，需要的丹藥越少、雷劫成功率越高；境界越高，丹藥材料與體力消耗越高。雷劫失敗時會消耗丹藥，但不會提升境界。</p>
     <p>點擊「查看修為等級一覽」可查看每個境界與小層所需的經驗值；點擊「宗門系統」可查看或加入宗門；點擊「遊戲說明」可再次閱讀本說明。</p>
 
     <h4>技能與資源詳解</h4>
@@ -1016,12 +1016,21 @@ const SKILL_CARDS = [
   ['pill','煉丹','煉製目前境界所需的突破丹'], ['gear','煉器','2 礦石＋2 獸肉 → 裝備']
 ];
 function getActionSlotCount() { return 1 + Math.floor((player.level || 0) / 10); }
+function getAlchemyLevel() { return (player.skillExp && player.skillExp.alchemy && player.skillExp.alchemy.level) || 1; }
+function getPillRecipes() {
+  const recipes = [{key:'qi',name:'聚氣丹',requiredLevel:1,herb:3,stone:0,meat:0,stamina:8,baseRate:65,breakthrough:false,description:'增加修為值 50，不需丹藥配方。'}];
+  BREAKTHROUGH_PILL_NAMES.forEach((name, index) => {
+    const tier = index + 1;
+    recipes.push({key:'realm' + tier,name,requiredLevel:tier === 1 ? 5 : (tier - 1) * 10,herb:3 + tier * 2,stone:Math.max(0,tier - 1),meat:Math.max(0,tier - 2),stamina:6 + tier * 2,baseRate:Math.max(18,58 - tier * 6),breakthrough:true,recipeItem:name + '配方',description:`用於${name.replace('丹','')}相關大境界突破；每次煉製消耗一張配方。`});
+  });
+  return recipes;
+}
+function getPillRecipe(key) { return getPillRecipes().find(recipe => recipe.key === key) || getPillRecipes()[0]; }
+function getSelectedPillRecipe() { const select=document.getElementById('pillRecipe'); return getPillRecipe(select && select.value); }
+function getAlchemySuccessRate(recipe) { return Math.max(10, Math.min(95, recipe.baseRate + (getAlchemyLevel() - recipe.requiredLevel) * 3)); }
 function getBreakthroughRecipe() {
   const tier = Math.floor((player.level || 0) / 10) + 1;
-  return {
-    tier, name: BREAKTHROUGH_PILL_NAMES[Math.min(tier - 1, BREAKTHROUGH_PILL_NAMES.length - 1)] || `第${tier}境突破丹`,
-    herb: 3 + tier * 2, stone: Math.max(0, tier - 1), meat: Math.max(0, tier - 2), stamina: 6 + tier * 2
-  };
+  return getPillRecipe('realm' + tier);
 }
 function migrateLegacyBreakthroughPills() {
   if (!player.bag || !player.bag.items || !player.bag.items['突破丹']) return;
@@ -1032,8 +1041,9 @@ function migrateLegacyBreakthroughPills() {
 function getMaxBatch(type) {
   const byStamina = Math.floor((player.stats.stamina || 0) / (STAMINA_COST[type] || 1));
   if (type === 'pill') {
-    const r = getBreakthroughRecipe();
-    return Math.min(Math.floor((player.stats.stamina || 0) / r.stamina), Math.floor((player.resources.herb || 0) / r.herb), r.stone ? Math.floor((player.resources.stone || 0) / r.stone) : Infinity, r.meat ? Math.floor((player.resources.meat || 0) / r.meat) : Infinity);
+    const r = getSelectedPillRecipe();
+    const recipeCount = r.breakthrough ? Math.floor((player.bag.items[r.recipeItem] || 0)) : Infinity;
+    return Math.min(Math.floor((player.stats.stamina || 0) / r.stamina), Math.floor((player.resources.herb || 0) / r.herb), r.stone ? Math.floor((player.resources.stone || 0) / r.stone) : Infinity, r.meat ? Math.floor((player.resources.meat || 0) / r.meat) : Infinity, recipeCount);
   }
   if (type === 'gear') return Math.min(byStamina, Math.floor((player.resources.stone || 0) / 2), Math.floor((player.resources.meat || 0) / 2));
   return byStamina;
@@ -1042,8 +1052,15 @@ function renderSkillsGrid() {
   const grid = document.getElementById('skillsGrid');
   if (!grid) return;
   grid.innerHTML = SKILL_CARDS.map(([type, name, result]) => {
-    const recipe = type === 'pill' ? getBreakthroughRecipe() : null;
-    const detail = recipe ? `${recipe.herb} 靈草${recipe.stone ? '＋' + recipe.stone + ' 礦石' : ''}${recipe.meat ? '＋' + recipe.meat + ' 獸肉' : ''} → ${recipe.name} · 體力 ${recipe.stamina}` : `${result} · 體力 ${STAMINA_COST[type]}`;
+    if (type === 'pill') {
+      const recipes = getPillRecipes(); const unlocked = recipes.filter(r => getAlchemyLevel() >= r.requiredLevel);
+      const selected = getSelectedPillRecipe();
+      const recipe = unlocked.some(r => r.key === selected.key) ? selected : unlocked[unlocked.length - 1];
+      const options = unlocked.map(r => `<option value="${r.key}"${r.key === recipe.key ? ' selected' : ''}>${r.name}（需煉丹 Lv.${r.requiredLevel}）</option>`).join('');
+      const detail = `${recipe.herb} 靈草${recipe.stone ? '＋' + recipe.stone + ' 礦石' : ''}${recipe.meat ? '＋' + recipe.meat + ' 獸肉' : ''}${recipe.breakthrough ? '＋1 ' + recipe.recipeItem : ''} → ${recipe.name} · 體力 ${recipe.stamina} · 成功率 ${getAlchemySuccessRate(recipe)}%`;
+      return `<div class="skill-card"><h4>煉丹（Lv.${getAlchemyLevel()}）</h4><select id="pillRecipe" onchange="renderSkillsGrid()">${options}</select><p>${detail}</p><div class="batch-controls"><input id="batch_pill" type="number" min="1" value="1" aria-label="煉丹次數"><button class="batch-max" onclick="fillMaxBatch('pill')">最大</button><button onclick="startBatch('pill')">開始</button></div></div>`;
+    }
+    const detail = `${result} · 體力 ${STAMINA_COST[type]}`;
     return `<div class="skill-card"><h4>${name}</h4><p>${detail}</p><div class="batch-controls"><input id="batch_${type}" type="number" min="1" value="1" aria-label="${name}次數"><button class="batch-max" onclick="fillMaxBatch('${type}')">最大</button><button onclick="startBatch('${type}')">開始</button></div></div>`;
   }).join('');
 }
@@ -1415,6 +1432,16 @@ function useBagItem(name, requestedCount) {
   save(); updateUI();
 }
 
+function setBagUseMax(name, input) {
+  const owned = (player.bag && player.bag.items[name]) || 0;
+  let max = owned;
+  if (name.includes('體力丹')) {
+    const gain = name.includes('大') ? 80 : (name.includes('中') ? 30 : 10);
+    max = Math.min(owned, Math.ceil(Math.max(0, player.stats.maxStamina - player.stats.stamina) / gain));
+  }
+  input.value = Math.max(0, max);
+}
+
 function getItemDescription(name) {
   const shopItem = Object.values(SHOP_ITEMS).find(item => item.name === name);
   if (shopItem) return shopItem.description;
@@ -1454,13 +1481,16 @@ function updateBagUI() {
       const quantity = document.createElement('input');
       quantity.type = 'number'; quantity.min = '1'; quantity.max = String(items[name]); quantity.value = '1';
       quantity.setAttribute('aria-label', `${name}使用數量`); quantity.style.width = '58px';
+      const maxButton = document.createElement('button');
+      maxButton.textContent = '最大';
+      maxButton.onclick = () => setBagUseMax(name, quantity);
       const useButton = document.createElement('button');
       useButton.textContent = '批量使用';
       useButton.onclick = () => useBagItem(name, quantity.value);
       const deleteButton = document.createElement('button');
       deleteButton.textContent = '刪除';
       deleteButton.onclick = () => deleteBagItem(name);
-      li.append(title, description, quantity, useButton, deleteButton);
+      li.append(title, description, quantity, maxButton, useButton, deleteButton);
       listEl.appendChild(li);
     });
   }
@@ -1471,29 +1501,40 @@ function updateBagUI() {
 function showRefine(type) { startBatch(type, 1); }
 function startRefineBatch(type, count) {
   if (!player.joinedSect) { alert('請先加入宗門才能使用煉丹或煉器'); return; }
+  const recipe = type === 'pill' ? getSelectedPillRecipe() : null;
+  if (recipe && getAlchemyLevel() < recipe.requiredLevel) { alert(`煉丹等級不足；煉製${recipe.name}需要 Lv.${recipe.requiredLevel}。`); return; }
   const max = getMaxBatch(type);
   if (count > max || max < 1) {
-    const r = getBreakthroughRecipe();
-    const material = type === 'pill' ? `${r.name}材料（每次 ${r.herb} 靈草${r.stone ? '、' + r.stone + ' 礦石' : ''}${r.meat ? '、' + r.meat + ' 獸肉' : ''}）` : '礦石與獸肉（每次各 2 個）';
+    const material = type === 'pill' ? `${recipe.name}材料（每次 ${recipe.herb} 靈草${recipe.stone ? '、' + recipe.stone + ' 礦石' : ''}${recipe.meat ? '、' + recipe.meat + ' 獸肉' : ''}${recipe.breakthrough ? '、1 張' + recipe.recipeItem : ''}）` : '礦石與獸肉（每次各 2 個）';
     alert(`無法批量製作 ${count} 次；請確認體力與${material}是否足夠，目前最多 ${max} 次。`);
     return;
   }
-  const recipe = getBreakthroughRecipe();
-  if (type === 'pill' && !addItemToBag(recipe.name, count)) return;
   if (type === 'pill') {
+    if (!player.bag.items[recipe.name] && Object.keys(player.bag.items).length >= player.bag.capacity) { alert('背包已滿，無法收納煉製完成的丹藥。'); return; }
     player.resources.herb -= recipe.herb * count;
     player.resources.stone -= recipe.stone * count;
     player.resources.meat -= recipe.meat * count;
+    if (recipe.breakthrough) {
+      player.bag.items[recipe.recipeItem] -= count;
+      if (player.bag.items[recipe.recipeItem] <= 0) delete player.bag.items[recipe.recipeItem];
+    }
+    let success = 0;
+    for (let i = 0; i < count; i++) if (Math.random() * 100 < getAlchemySuccessRate(recipe)) success++;
+    if (success) addItemToBag(recipe.name, success);
     gainSkillExp('alchemy', 10 * count);
+    player.stats.stamina -= recipe.stamina * count;
+    save(); updateUI();
+    alert(`煉製${recipe.name} ${count} 次：成功 ${success} 次、失敗 ${count - success} 次（成功率 ${getAlchemySuccessRate(recipe)}%）。`);
+    return;
   } else {
     player.resources.stone -= 2 * count;
     player.resources.meat -= 2 * count;
     player.resources.gear += count;
     gainSkillExp('forging', 10 * count);
   }
-  player.stats.stamina -= (type === 'pill' ? recipe.stamina : STAMINA_COST[type]) * count;
+  player.stats.stamina -= STAMINA_COST[type] * count;
   save(); updateUI();
-  alert(type === 'pill' ? `煉製完成：獲得 ${recipe.name} ${count} 顆。` : `${ACTION_LABELS[type]}批量完成：${count} 次。`);
+  alert(`${ACTION_LABELS[type]}批量完成：${count} 次。`);
 }
 
 // 計算被動屬性：根據主動屬性更新攻擊、防禦、速度、運氣和最大HP/MP
@@ -1752,9 +1793,12 @@ function exchangeContributionItem(i){
 function showSectWarehouse(){ const d=document.getElementById('sectDetail'); if(d)d.innerHTML='<h4>宗門倉庫</h4><p>目前可查看宗門資源，未來開放存取材料與裝備。</p>'; }
 function showSectShop(){
   const d=document.getElementById('sectDetail'); if(!d)return;
-  d.innerHTML='<h4>宗門商店</h4><p>宗門商店主要販售修仙專用物品，與主選單民生商店區隔。</p>'+
+  d.innerHTML='<h4>宗門商店</h4><p>宗門商店主要販售修仙專用物品，與主選單民生商店區隔。突破丹配方為消耗品，每煉製一枚對應突破丹都會消耗一張。</p>'+
   '<button onclick="buySectShopItem(\'練氣丹配方\',1000)">練氣丹配方（1000貢獻）</button>'+
   '<button onclick="buySectShopItem(\'築基丹配方\',5000)">築基丹配方（5000貢獻）</button>'+
+  '<button onclick="buySectShopItem(\'結丹丹配方\',12000)">結丹丹配方（12000貢獻）</button>'+
+  '<button onclick="buySectShopItem(\'元嬰丹配方\',30000)">元嬰丹配方（30000貢獻）</button>'+
+  '<button onclick="buySectShopItem(\'化神丹配方\',70000)">化神丹配方（70000貢獻）</button>'+
   '<button onclick="buySectShopItem(\'符箓圖稿\',800)">符箓圖稿（800貢獻）</button>'+
   '<button onclick="buySectShopItem(\'初級丹爐\',1500)">初級丹爐（1500貢獻）</button>'+
   '<button onclick="buySectShopItem(\'煉器圖稿\',1200)">煉器圖稿（1200貢獻）</button>';
