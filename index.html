@@ -299,7 +299,7 @@
     <p><strong>V1-12 批量操作：</strong>所有技能均可輸入批量次數；系統會以目前體力為上限，按「最大」可自動填入可進行次數。煉丹與煉器還會檢查材料是否足夠。初始有 1 個進行中欄位，每進入一個新的大境界（每 10 個小層）便增加 1 個欄位，可同時處理多項計時技能。進行中的任務會保留開始與結束時間，重新整理頁面後會繼續倒數並在時間到時結算。</p>
     <p>除了<strong>修練</strong>外，其餘技能需加入宗門後才能使用。未加入宗門的玩家被稱為<strong>散修</strong>。加入後，行動所獲得的經驗將轉化為<strong>貢獻度</strong>，貢獻度可提升你的<strong>宗門位階</strong>（散修 → 外門弟子 → 內門弟子 → 長老……），具體階位請參考「運氣訓練工具」中的宗門位階列表。你可以選擇加入預設的 AI 宗門（目前共有 20 個，例如紫雲宗、青雲門、玄天宗、白玉宮等），或在未來達到條件後自行創建宗門。未來版本還可能開放宗門 PK 系統，敬請期待。</p>
     <p>背包初始有 10 格，相同物品可疊加，例如「入品丹藥(10)」。每項物品都會標示用途，可輸入數量批量使用。商店購買的體力丹會先進入背包；丹藥賣出價格固定為買入價的一半，奇數價格無條件捨去。</p>
-    <p><strong>大境界突破：</strong>每完成一個境界的十個小層後，下一個大境界必須消耗「突破丹」才能踏入。靈根越高，需要的突破丹越少；突破丹可透過煉丹獲得。</p>
+    <p><strong>大境界突破與雷劫：</strong>每完成一個境界的十個小層後，下一個大境界必須使用對應丹藥並渡過天道雷劫：凡人→練氣使用練氣丹、練氣→築基使用築基丹、築基→結丹使用結丹丹，後續依此類推。靈根越高，需要的丹藥越少、雷劫成功率越高；境界越高，丹藥的煉製材料與體力消耗越高。雷劫失敗時會消耗丹藥，但不會提升境界。</p>
     <p>點擊「查看修為等級一覽」可查看每個境界與小層所需的經驗值；點擊「宗門系統」可查看或加入宗門；點擊「遊戲說明」可再次閱讀本說明。</p>
 
     <h4>技能與資源詳解</h4>
@@ -357,10 +357,10 @@
     <h4>丹藥配方範例</h4>
     <p>下列丹藥為經典突破丹範例，實際效果與材料要求可依遊戲平衡微調：</p>
     <ul>
-      <li><strong>練氣丹：</strong>協助突破練氣期小層次。配方：基礎靈草 3 枚、靈石碎片 1 個、清水。效果：立即增加一定量修為，並短暫提高悟性，使修練效率提升 10%，持續 30 分鐘。獲取途徑：初級煉丹配方，可在宗門任務或商店購買。</li>
-      <li><strong>築基丹：</strong>突破築基境界瓶頸（練氣期滿後使用）。配方：稀有靈草（如水靈草） 2 枚、獸骨粉 1 份、靈石碎片 3 個。效果：提升大量修為，並永久增加主動屬性「體力」1 點。獲取途徑：需宗門長老指導或完成特定任務後獲得配方。</li>
-      <li><strong>結丹丹：</strong>在築基期到頂後使用，協助突破到結丹期。配方：靈獸內丹 1 顆、稀有礦粉 2 份、珍稀靈草（如赤炎草） 1 枚、靈石 5 個。效果：大幅提升修為，並永久增加主動屬性「精神」與「智力」各 1 點，可提高真氣上限及煉丹成功率。獲取途徑：完成宗門高階副本或試煉後才能取得配方，成功率較低，需要高悟性和高煉丹技能。</li>
-      <li><strong>元嬰丹：</strong>協助從結丹期突破至元嬰期，是高層次修為的關鍵丹藥。配方：祖級靈草（如玄陰草）3 枚、靈獸王內丹 1 顆、靈石精華 10 個、稀有木精 2 個。效果：除大幅提升修為外，還可永久增加主動屬性「靈根」1 點與悟性 1 點，並提升全屬性 5%。獲取途徑：極其罕見，只能通過完成頂級宗門任務或秘境試煉取得，且需特殊丹爐或宗門煉丹師協助。</li>
+      <li><strong>練氣丹：</strong>凡人圓滿後踏入練氣期所需的入門突破丹。</li>
+      <li><strong>築基丹：</strong>練氣期圓滿後突破築基期的必要丹藥。</li>
+      <li><strong>結丹丹：</strong>築基期圓滿後突破結丹期的必要丹藥。</li>
+      <li><strong>元嬰丹：</strong>結丹期圓滿後突破元嬰期的必要丹藥。每往上一個大境界，煉製所需的靈草、礦石、獸肉與體力都會提高。</li>
     </ul>
     <p>V1-8新增：經驗值改為進度條顯示；角色升級時會播放升級音效；體力值每5分鐘恢復1點，體力屬性越高，恢復間隔越短。V1-9新增：修練對應修為值，其餘技能各自擁有專屬經驗值與等級；V1-10新增：精神直接影響真氣值，背包新增使用道具與刪除功能，仙門位階與修為等級移植自運氣訓練工具4-6，宗門商店開放購買丹藥配方、道具圖稿與宗門專用道具，每日簽到可獲得獎勵；氣血值、真氣值、體力值改為目前值/最大值與血條顯示；商店新增恢復體力值商品，並開放收購礦石、木材、藥材、靈肉、丹藥、靈器、符箓等。宗門系統新增查看仙門位階一覽表、成員列表、宗門排行榜、上貢、兌換貢獻、宗門倉庫、宗門商店、宗門秘境、宗門擂台與創建宗門。宗門位階改為玩家主動消耗貢獻度兌換，兌換需求列於仙門位階一覽表。以上內容提供參考，未來版本將逐步開放更多物品、丹藥與裝備，請持續關注更新。</p>
     <button onclick="showPage('mainMenu')">返回主選單</button>
@@ -420,6 +420,7 @@ const SHOP_ITEMS = {
   staminaMedium: {name:'中體力丹', cost:25, stamina:30, description:'恢復體力 30 點。'},
   staminaLarge: {name:'大體力丹', cost:60, stamina:80, description:'恢復體力 80 點。'}
 };
+const BREAKTHROUGH_PILL_NAMES = ['練氣丹','築基丹','結丹丹','元嬰丹','化神丹','煉虛丹','合體丹','大乘丹','渡劫丹','真仙丹','金仙丹','太乙金丹','大羅丹'];
 
 // 宗門位階里程碑：根據玩家累積的貢獻度提升宗門位階。
 // 阈值由小到大排列，每達到一個門檻便升至對應位階。
@@ -766,6 +767,7 @@ function loadFromCloud() {
     isLoadingCloud = true;
     player = result.player;
     activeActions = Array.isArray(result.activeActions) ? result.activeActions : [];
+    migrateLegacyBreakthroughPills();
     save(); updateUI(); isLoadingCloud = false;
     setCloudStatus('已載入雲端存檔：' + (result.updatedAt || '完成'), false);
   };
@@ -862,6 +864,7 @@ function load() {
         player.bag.capacity = player.bag.capacity || 10;
         player.bag.items = player.bag.items || {};
       }
+      migrateLegacyBreakthroughPills();
     } catch(err) {
       console.error(err);
     }
@@ -1010,19 +1013,39 @@ const ACTION_LABELS = { train:'修練', mine:'採礦', cutWood:'砍柴', farm:'�
 const SKILL_CARDS = [
   ['train','修練','獲得修為值'], ['mine','採礦','獲得礦石'], ['cutWood','砍柴','獲得木材'],
   ['farm','種田','獲得靈草'], ['hunt','狩獵','獲得獸肉'], ['drawTalisman','畫符','獲得符咒'],
-  ['pill','煉丹','3 靈草 → 入品丹藥'], ['gear','煉器','2 礦石＋2 獸肉 → 裝備']
+  ['pill','煉丹','煉製目前境界所需的突破丹'], ['gear','煉器','2 礦石＋2 獸肉 → 裝備']
 ];
 function getActionSlotCount() { return 1 + Math.floor((player.level || 0) / 10); }
+function getBreakthroughRecipe() {
+  const tier = Math.floor((player.level || 0) / 10) + 1;
+  return {
+    tier, name: BREAKTHROUGH_PILL_NAMES[Math.min(tier - 1, BREAKTHROUGH_PILL_NAMES.length - 1)] || `第${tier}境突破丹`,
+    herb: 3 + tier * 2, stone: Math.max(0, tier - 1), meat: Math.max(0, tier - 2), stamina: 6 + tier * 2
+  };
+}
+function migrateLegacyBreakthroughPills() {
+  if (!player.bag || !player.bag.items || !player.bag.items['突破丹']) return;
+  const name = getBreakthroughRecipe().name;
+  player.bag.items[name] = (player.bag.items[name] || 0) + player.bag.items['突破丹'];
+  delete player.bag.items['突破丹'];
+}
 function getMaxBatch(type) {
   const byStamina = Math.floor((player.stats.stamina || 0) / (STAMINA_COST[type] || 1));
-  if (type === 'pill') return Math.min(byStamina, Math.floor((player.resources.herb || 0) / 3));
+  if (type === 'pill') {
+    const r = getBreakthroughRecipe();
+    return Math.min(Math.floor((player.stats.stamina || 0) / r.stamina), Math.floor((player.resources.herb || 0) / r.herb), r.stone ? Math.floor((player.resources.stone || 0) / r.stone) : Infinity, r.meat ? Math.floor((player.resources.meat || 0) / r.meat) : Infinity);
+  }
   if (type === 'gear') return Math.min(byStamina, Math.floor((player.resources.stone || 0) / 2), Math.floor((player.resources.meat || 0) / 2));
   return byStamina;
 }
 function renderSkillsGrid() {
   const grid = document.getElementById('skillsGrid');
   if (!grid) return;
-  grid.innerHTML = SKILL_CARDS.map(([type, name, result]) => `<div class="skill-card"><h4>${name}</h4><p>${result} · 體力 ${STAMINA_COST[type]}</p><div class="batch-controls"><input id="batch_${type}" type="number" min="1" value="1" aria-label="${name}次數"><button class="batch-max" onclick="fillMaxBatch('${type}')">最大</button><button onclick="startBatch('${type}')">開始</button></div></div>`).join('');
+  grid.innerHTML = SKILL_CARDS.map(([type, name, result]) => {
+    const recipe = type === 'pill' ? getBreakthroughRecipe() : null;
+    const detail = recipe ? `${recipe.herb} 靈草${recipe.stone ? '＋' + recipe.stone + ' 礦石' : ''}${recipe.meat ? '＋' + recipe.meat + ' 獸肉' : ''} → ${recipe.name} · 體力 ${recipe.stamina}` : `${result} · 體力 ${STAMINA_COST[type]}`;
+    return `<div class="skill-card"><h4>${name}</h4><p>${detail}</p><div class="batch-controls"><input id="batch_${type}" type="number" min="1" value="1" aria-label="${name}次數"><button class="batch-max" onclick="fillMaxBatch('${type}')">最大</button><button onclick="startBatch('${type}')">開始</button></div></div>`;
+  }).join('');
 }
 function fillMaxBatch(type) {
   const input = document.getElementById('batch_' + type);
@@ -1196,6 +1219,11 @@ function getBreakthroughPillNeed() {
   // 每個後續境界基礎需求增加，靈根每提升 2 點可少用 1 顆，最低一顆。
   return Math.max(1, 3 + realm - Math.floor((root - 1) / 2));
 }
+function getTribulationSuccessRate() {
+  const realm = Math.floor(player.level / 10) + 1;
+  const root = player.cultivation.root || 1;
+  return Math.max(15, Math.min(95, 88 - (realm - 1) * 7 + (root - 1) * 2));
+}
 function gainCultivationExp(amount) {
   player.exp += amount;
   while (player.exp >= getExpNeeded(player.level) && !isBreakthroughReady()) {
@@ -1208,15 +1236,21 @@ function gainCultivationExp(amount) {
 function attemptBreakthrough() {
   if (!isBreakthroughReady()) { alert('尚未達到大境界突破條件。'); return; }
   const need = getBreakthroughPillNeed();
-  const owned = player.bag.items['突破丹'] || 0;
-  if (owned < need) { alert(`突破${getStage(player.level + 1)}需要突破丹 ${need} 顆；目前只有 ${owned} 顆。`); return; }
-  player.bag.items['突破丹'] -= need;
-  if (player.bag.items['突破丹'] <= 0) delete player.bag.items['突破丹'];
+  const pill = getBreakthroughRecipe().name;
+  const owned = player.bag.items[pill] || 0;
+  if (owned < need) { alert(`突破${getStage(player.level + 1)}需要${pill} ${need} 顆；目前只有 ${owned} 顆。`); return; }
+  player.bag.items[pill] -= need;
+  if (player.bag.items[pill] <= 0) delete player.bag.items[pill];
+  const rate = getTribulationSuccessRate();
+  if (Math.random() * 100 >= rate) {
+    alert(`天道雷劫降臨……突破失敗！${pill}已消耗，但境界未提升。（本次成功率 ${rate}%）`);
+    save(); updateUI(); return;
+  }
   player.exp -= getExpNeeded(player.level);
   player.level++;
   player.attributePoints += 5;
   playLevelUpSound();
-  alert(`突破成功！踏入${getStage(player.level)}，消耗突破丹 ${need} 顆。`);
+  alert(`天道雷劫已過，突破成功！踏入${getStage(player.level)}，消耗${pill} ${need} 顆。`);
   save(); updateUI();
 }
 function updateBreakthroughUI() {
@@ -1224,9 +1258,11 @@ function updateBreakthroughUI() {
   if (!panel) return;
   if (!isBreakthroughReady()) { panel.style.display = 'none'; return; }
   const need = getBreakthroughPillNeed();
-  const owned = player.bag.items['突破丹'] || 0;
+  const pill = getBreakthroughRecipe().name;
+  const owned = player.bag.items[pill] || 0;
+  const rate = getTribulationSuccessRate();
   panel.style.display = 'block';
-  panel.innerHTML = `<strong>大境界突破：${getStage(player.level)} → ${getStage(player.level + 1)}</strong><br>靈根 ${player.cultivation.root}，需要突破丹 ${need} 顆（持有 ${owned} 顆）<br><button onclick="attemptBreakthrough()">消耗突破丹，嘗試突破</button>`;
+  panel.innerHTML = `<strong>大境界突破：${getStage(player.level)} → ${getStage(player.level + 1)}</strong><br>靈根 ${player.cultivation.root}，需要${pill} ${need} 顆（持有 ${owned} 顆）<br>天道雷劫成功率：${rate}%；失敗仍會消耗丹藥。<br><button onclick="attemptBreakthrough()">引動天道雷劫，嘗試突破</button>`;
 }
 
 // V1-9：取得技能升級所需經驗
@@ -1382,7 +1418,7 @@ function useBagItem(name, requestedCount) {
 function getItemDescription(name) {
   const shopItem = Object.values(SHOP_ITEMS).find(item => item.name === name);
   if (shopItem) return shopItem.description;
-  if (name === '突破丹') return '用於大境界突破；靈根越高，所需數量越少。';
+  if (BREAKTHROUGH_PILL_NAMES.includes(name)) return '用於對應大境界突破；靈根越高，所需數量越少，並須面對天道雷劫。';
   if (name.includes('丹藥') || name.includes('聚氣丹') || name.includes('練氣丹')) return '每個可增加修為值 50。';
   if (name.includes('符')) return '每張可增加運氣 1 點。';
   return '目前尚未設定使用效果。';
@@ -1437,13 +1473,17 @@ function startRefineBatch(type, count) {
   if (!player.joinedSect) { alert('請先加入宗門才能使用煉丹或煉器'); return; }
   const max = getMaxBatch(type);
   if (count > max || max < 1) {
-    const material = type === 'pill' ? '靈草（每次 3 個）' : '礦石與獸肉（每次各 2 個）';
+    const r = getBreakthroughRecipe();
+    const material = type === 'pill' ? `${r.name}材料（每次 ${r.herb} 靈草${r.stone ? '、' + r.stone + ' 礦石' : ''}${r.meat ? '、' + r.meat + ' 獸肉' : ''}）` : '礦石與獸肉（每次各 2 個）';
     alert(`無法批量製作 ${count} 次；請確認體力與${material}是否足夠，目前最多 ${max} 次。`);
     return;
   }
-  if (type === 'pill' && !addItemToBag('突破丹', count)) return;
+  const recipe = getBreakthroughRecipe();
+  if (type === 'pill' && !addItemToBag(recipe.name, count)) return;
   if (type === 'pill') {
-    player.resources.herb -= 3 * count;
+    player.resources.herb -= recipe.herb * count;
+    player.resources.stone -= recipe.stone * count;
+    player.resources.meat -= recipe.meat * count;
     gainSkillExp('alchemy', 10 * count);
   } else {
     player.resources.stone -= 2 * count;
@@ -1451,9 +1491,9 @@ function startRefineBatch(type, count) {
     player.resources.gear += count;
     gainSkillExp('forging', 10 * count);
   }
-  player.stats.stamina -= STAMINA_COST[type] * count;
+  player.stats.stamina -= (type === 'pill' ? recipe.stamina : STAMINA_COST[type]) * count;
   save(); updateUI();
-  alert(`${ACTION_LABELS[type]}批量完成：${count} 次。`);
+  alert(type === 'pill' ? `煉製完成：獲得 ${recipe.name} ${count} 顆。` : `${ACTION_LABELS[type]}批量完成：${count} 次。`);
 }
 
 // 計算被動屬性：根據主動屬性更新攻擊、防禦、速度、運氣和最大HP/MP
