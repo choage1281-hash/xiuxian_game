@@ -84,11 +84,17 @@
   .action-progress { height:6px; background:#dce8f5; border-radius:99px; overflow:hidden; margin-top:7px; }
   .action-progress > span { display:block; height:100%; background:#3d8be0; transition:width .3s; }
   .batch-hint { margin:0 0 10px; color:#52647c; font-size:.9em; }
+  .cloud-sync-panel { margin-top:12px; padding:12px; border:1px solid #c8daf0; border-radius:10px; background:#f5faff; }
+  .cloud-sync-panel h4 { margin:0 0 7px; color:#245b99; }
+  .cloud-sync-panel input { box-sizing:border-box; width:100%; padding:8px; border:1px solid #b8c9df; border-radius:6px; margin:5px 0; }
+  .cloud-sync-panel .cloud-actions { display:flex; flex-wrap:wrap; gap:7px; margin-top:7px; }
+  .cloud-sync-panel .cloud-actions button { flex:1 1 145px; margin:0 !important; background:#245b99; }
+  .cloud-status { display:block; margin-top:8px; color:#52647c; font-size:.9em; }
   @media (max-width:600px) { .exp-wrap,.stat-wrap { width:135px; } .panel { padding:9px; } }
 </style>
 </head>
 <body>
-  <h1>修仙遊戲 V1-12</h1>
+  <h1>修仙遊戲 V1-13</h1>
   <!-- V1-8 升級音效：使用瀏覽器內建 AudioContext 產生提示音，不需外部音檔 -->
 
   <!-- 玩家資訊面板：遊戲開始後顯示；置頂顯示 -->
@@ -171,6 +177,19 @@
     <button onclick="exportSave()">匯出存檔</button>
     <input type="file" id="importFileMain" style="display:none" onchange="importSave(event)">
     <button onclick="document.getElementById('importFileMain').click()">匯入存檔</button>
+    <button onclick="toggleCloudSyncPanel()">雲端同步設定</button>
+    <div id="cloudSyncPanel" class="cloud-sync-panel" style="display:none">
+      <h4>Google 雲端同步</h4>
+      <p class="batch-hint">首次使用：將 Apps Script 部署網址貼到下方。同步會保存角色與進行中的任務。</p>
+      <label>同步網址：<input id="cloudEndpoint" type="url" placeholder="https://script.google.com/macros/s/.../exec"></label>
+      <label>玩家同步代碼：<input id="cloudPlayerId" type="text" readonly></label>
+      <div class="cloud-actions">
+        <button onclick="saveCloudSettings()">儲存設定</button>
+        <button onclick="syncToCloud(true)">立即上傳</button>
+        <button onclick="loadFromCloud()">從雲端載入</button>
+      </div>
+      <span id="cloudSyncStatus" class="cloud-status">尚未設定雲端同步。</span>
+    </div>
   </div>
 
   <!-- 修為等級一覽頁面，預設隱藏 -->
@@ -616,10 +635,97 @@ const ACTION_TIME = {train:10, mine:15, farm:20, hunt:25, drawTalisman:20}; // �
 // 新增砍柴技能時間
 ACTION_TIME.cutWood = 15;
 
+// V1-13：Google 試算表雲端同步。網址與玩家代碼只保存在目前瀏覽器；
+// 實際存檔仍保留在 localStorage，離線時可繼續遊玩。
+const CLOUD_ENDPOINT_KEY = 'xiuxian_v1_cloud_endpoint';
+const CLOUD_PLAYER_ID_KEY = 'xiuxian_v1_cloud_player_id';
+let cloudSyncTimer = null;
+let isLoadingCloud = false;
+
+function createCloudPlayerId() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'player-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+}
+function getCloudPlayerId() {
+  let id = localStorage.getItem(CLOUD_PLAYER_ID_KEY);
+  if (!id) { id = createCloudPlayerId(); localStorage.setItem(CLOUD_PLAYER_ID_KEY, id); }
+  return id;
+}
+function getCloudEndpoint() { return (localStorage.getItem(CLOUD_ENDPOINT_KEY) || '').trim(); }
+function setCloudStatus(message, isError) {
+  const el = document.getElementById('cloudSyncStatus');
+  if (!el) return;
+  el.textContent = message;
+  el.style.color = isError ? '#b42318' : '#52647c';
+}
+function updateCloudSyncUI() {
+  const endpoint = getCloudEndpoint();
+  const endpointInput = document.getElementById('cloudEndpoint');
+  const idInput = document.getElementById('cloudPlayerId');
+  if (endpointInput) endpointInput.value = endpoint;
+  if (idInput) idInput.value = getCloudPlayerId();
+  setCloudStatus(endpoint ? '已設定。遊戲進度會在變更後自動上傳。' : '尚未設定雲端同步。', false);
+}
+function toggleCloudSyncPanel() {
+  const panel = document.getElementById('cloudSyncPanel');
+  if (!panel) return;
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  if (panel.style.display === 'block') updateCloudSyncUI();
+}
+function saveCloudSettings() {
+  const input = document.getElementById('cloudEndpoint');
+  const endpoint = input ? input.value.trim() : '';
+  if (endpoint && !/^https:\/\/script\.google\.com\/macros\/s\//.test(endpoint)) {
+    setCloudStatus('請貼上 Google Apps Script 的 /exec 部署網址。', true); return;
+  }
+  if (endpoint) localStorage.setItem(CLOUD_ENDPOINT_KEY, endpoint);
+  else localStorage.removeItem(CLOUD_ENDPOINT_KEY);
+  updateCloudSyncUI();
+}
+function scheduleCloudSync() {
+  if (isLoadingCloud || !getCloudEndpoint()) return;
+  clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = setTimeout(() => syncToCloud(false), 1200);
+}
+function syncToCloud(showMessage) {
+  const endpoint = getCloudEndpoint();
+  if (!endpoint) { if (showMessage) setCloudStatus('請先儲存 Apps Script 部署網址。', true); return; }
+  const payload = {
+    action: 'save', playerId: getCloudPlayerId(), player: player,
+    activeActions: activeActions, savedAt: new Date().toISOString()
+  };
+  // Apps Script Web App 對本機 HTML 的跨網域 POST 以 no-cors 送出；
+  // 寫入成功與否可從試算表的「同步紀錄」工作表查看。
+  fetch(endpoint, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload) })
+    .then(() => setCloudStatus('已送出雲端同步：' + new Date().toLocaleTimeString(), false))
+    .catch(() => setCloudStatus('同步送出失敗，請檢查網路或部署網址。', true));
+}
+function loadFromCloud() {
+  const endpoint = getCloudEndpoint();
+  if (!endpoint) { setCloudStatus('請先儲存 Apps Script 部署網址。', true); return; }
+  if (!confirm('要以雲端存檔覆蓋目前瀏覽器中的進度嗎？')) return;
+  const callback = '__xiuxianCloudLoad_' + Date.now();
+  const script = document.createElement('script');
+  window[callback] = (result) => {
+    script.remove(); delete window[callback];
+    if (!result || !result.ok || !result.player) { setCloudStatus((result && result.error) || '雲端沒有找到此玩家存檔。', true); return; }
+    isLoadingCloud = true;
+    player = result.player;
+    activeActions = Array.isArray(result.activeActions) ? result.activeActions : [];
+    save(); updateUI(); isLoadingCloud = false;
+    setCloudStatus('已載入雲端存檔：' + (result.updatedAt || '完成'), false);
+  };
+  script.onerror = () => { delete window[callback]; setCloudStatus('讀取雲端失敗，請檢查部署網址與存取權。', true); };
+  script.src = endpoint + (endpoint.includes('?') ? '&' : '?') + 'action=load&playerId=' + encodeURIComponent(getCloudPlayerId()) + '&callback=' + callback;
+  document.head.appendChild(script);
+  setCloudStatus('正在讀取雲端存檔…', false);
+}
+
 function save() {
   localStorage.setItem("xiuxian_v1_save", JSON.stringify(player));
   // V1-12：計時中的任務獨立保存，重新整理頁面後仍可依原結束時間繼續倒數。
   localStorage.setItem("xiuxian_v1_active_actions", JSON.stringify(activeActions));
+  scheduleCloudSync();
 }
 
 function load() {
@@ -735,6 +841,7 @@ function load() {
     showPage('mainMenu');
   }
   updateUI();
+  updateCloudSyncUI();
 }
 function resetGame() {
   if (!confirm("確定要重置所有進度？")) return;
