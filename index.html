@@ -90,6 +90,16 @@
   .cloud-sync-panel .cloud-actions { display:flex; flex-wrap:wrap; gap:7px; margin-top:7px; }
   .cloud-sync-panel .cloud-actions button { flex:1 1 145px; margin:0 !important; background:#245b99; }
   .cloud-status { display:block; margin-top:8px; color:#52647c; font-size:.9em; }
+  #mainMenu .cloud-button { background:#f4c542; color:#4d3800; }
+  #mainMenu .cloud-button:hover { background:#ffd965; }
+  .shop-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(245px,1fr)); gap:12px; }
+  .shop-item { padding:13px; border:1px solid #cfe0d0; border-radius:10px; background:#fbfffb; }
+  .shop-item h4 { margin:0 0 5px; color:#176c39; }
+  .item-description { margin:4px 0; color:#596579; font-size:.9em; }
+  .shop-controls { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:9px; }
+  .shop-controls input { width:62px; padding:7px 4px; border:1px solid #b8c9b8; border-radius:6px; text-align:center; }
+  .shop-controls button { display:inline-block !important; width:auto !important; margin:0 !important; padding:8px 10px !important; }
+  #backToTop { position:fixed; right:22px; bottom:22px; z-index:20; display:none; border:0; border-radius:999px; padding:11px 14px; background:#314c78; color:#fff; box-shadow:0 3px 10px rgba(0,0,0,.22); cursor:pointer; }
   @media (max-width:600px) { .exp-wrap,.stat-wrap { width:135px; } .panel { padding:9px; } }
 </style>
 </head>
@@ -136,6 +146,7 @@
     <strong>裝備-武器：</strong><span id="equip_weapon">無</span><br>
     <strong>裝備-盔甲：</strong><span id="equip_armor">無</span><br>
     <strong>裝備-飾品：</strong><span id="equip_accessory">無</span>
+    <div id="breakthroughPanel" style="display:none; margin-top:12px; padding:10px; border:1px solid #e6c46a; border-radius:8px; background:#fff9e7;"></div>
     <!-- V1-12：常駐於玩家資訊底部，方便隨時查看任務進度 -->
     <div id="currentPanel" style="margin-top:12px; padding-top:10px; border-top:1px solid #dce6f4;">
       <strong>進行中欄位：</strong><span id="actionSlotSummary">1 / 1</span>
@@ -177,12 +188,12 @@
     <button onclick="exportSave()">匯出存檔</button>
     <input type="file" id="importFileMain" style="display:none" onchange="importSave(event)">
     <button onclick="document.getElementById('importFileMain').click()">匯入存檔</button>
-    <button id="autoCloudSyncButton" onclick="toggleAutoCloudSync()">自動雲端同步：開</button>
-    <button onclick="syncToCloud(true)">立即同步雲端</button>
+    <button class="cloud-button" id="autoCloudSyncButton" onclick="toggleAutoCloudSync()">自動雲端同步：開</button>
+    <button class="cloud-button" onclick="syncToCloud(true)">立即同步雲端</button>
     <input type="file" id="cloudUploadFile" accept="application/json,.json" style="display:none" onchange="uploadLocalSaveToCloud(event)">
-    <button onclick="document.getElementById('cloudUploadFile').click()">手動上傳雲端存檔</button>
-    <button onclick="loadFromCloud()">下載雲端存檔</button>
-    <button onclick="toggleCloudSyncPanel()">雲端同步設定</button>
+    <button class="cloud-button" onclick="document.getElementById('cloudUploadFile').click()">手動上傳雲端存檔</button>
+    <button class="cloud-button" onclick="loadFromCloud()">下載雲端存檔</button>
+    <button class="cloud-button" onclick="toggleCloudSyncPanel()">雲端同步設定</button>
     <div id="cloudSyncPanel" class="cloud-sync-panel" style="display:none">
       <h4>Google 雲端同步</h4>
       <p class="batch-hint">首次使用：將 Apps Script 部署網址貼到下方。同步會保存角色與進行中的任務。</p>
@@ -249,12 +260,12 @@
   <!-- 商店頁面，預設隱藏 -->
   <div id="shopPage" class="panel" style="display:none">
     <h3>商店</h3>
-    <p>可購買恢復體力值的商品，也可出售玩家製作或採集的物品。</p>
-    <h4>購買商品</h4>
-    <div class="shop-grid">
-      <button onclick="buyShopItem('staminaSmall')">小體力丹：恢復體力 10（靈石 10）</button>
-      <button onclick="buyShopItem('staminaMedium')">中體力丹：恢復體力 30（靈石 25）</button>
-      <button onclick="buyShopItem('staminaLarge')">大體力丹：恢復體力 80（靈石 60）</button>
+    <p>商品會存入背包。輸入數量後可買入或賣出；「最大」會自動填入目前可交易的最大數量。</p>
+    <h4>丹藥買賣</h4>
+    <div class="shop-list">
+      <div class="shop-item"><h4>小體力丹</h4><p class="item-description">恢復體力 10 點。</p><small>買入：10 靈石｜賣出：5 靈石</small><div class="shop-controls"><input id="shopQty_staminaSmall" type="number" min="1" value="1" aria-label="小體力丹數量"><button onclick="setShopMax('staminaSmall','buy')">買入最大</button><button onclick="buyShopItem('staminaSmall')">買入</button><button onclick="setShopMax('staminaSmall','sell')">賣出最大</button><button onclick="sellShopItem('staminaSmall')">賣出</button></div></div>
+      <div class="shop-item"><h4>中體力丹</h4><p class="item-description">恢復體力 30 點。</p><small>買入：25 靈石｜賣出：12 靈石</small><div class="shop-controls"><input id="shopQty_staminaMedium" type="number" min="1" value="1" aria-label="中體力丹數量"><button onclick="setShopMax('staminaMedium','buy')">買入最大</button><button onclick="buyShopItem('staminaMedium')">買入</button><button onclick="setShopMax('staminaMedium','sell')">賣出最大</button><button onclick="sellShopItem('staminaMedium')">賣出</button></div></div>
+      <div class="shop-item"><h4>大體力丹</h4><p class="item-description">恢復體力 80 點。</p><small>買入：60 靈石｜賣出：30 靈石</small><div class="shop-controls"><input id="shopQty_staminaLarge" type="number" min="1" value="1" aria-label="大體力丹數量"><button onclick="setShopMax('staminaLarge','buy')">買入最大</button><button onclick="buyShopItem('staminaLarge')">買入</button><button onclick="setShopMax('staminaLarge','sell')">賣出最大</button><button onclick="sellShopItem('staminaLarge')">賣出</button></div></div>
     </div>
     <h4>出售物品</h4>
     <div class="sell-grid">
@@ -284,10 +295,11 @@
   <div id="rulesPage" class="panel" style="display:none">
     <h3>遊戲說明</h3>
     <p>本遊戲為修仙模擬養成，所有玩家在開始旅程前，<strong>必須創建角色</strong>並完成屬性點分配。請在角色創建頁中輸入姓名、選擇性別，並使用初始的「屬性可支配點數」分配至<strong>力量、敏捷、智力、體力、精神、魅力</strong>等主動屬性。<br>遊戲開始時僅顯示角色創建與屬性分配介面，創建完成後才會顯示玩家資訊、技能按鈕、進行中狀態與背包等面板。起始氣血值與真氣值均為 100，體力值（體力）為 100。攻擊、防禦、速度、運氣為被動屬性，初始各為 5 點；主動屬性初始各為 1 點，主動屬性將影響被動屬性與最大氣血值、真氣值、體力值。</p>
-    <p>每次行動會消耗體力值；體力值不足時無法進行行動。隨著修為提升、使用丹藥或休息可恢復體力值。</p>
+    <p>每次行動會消耗體力值；體力值不足時無法進行行動。隨著修為提升、使用丹藥或休息可恢復體力值。背包中的體力丹可批量使用，系統只會恢復到體力上限，不會浪費或超過最大值。</p>
     <p><strong>V1-12 批量操作：</strong>所有技能均可輸入批量次數；系統會以目前體力為上限，按「最大」可自動填入可進行次數。煉丹與煉器還會檢查材料是否足夠。初始有 1 個進行中欄位，每進入一個新的大境界（每 10 個小層）便增加 1 個欄位，可同時處理多項計時技能。進行中的任務會保留開始與結束時間，重新整理頁面後會繼續倒數並在時間到時結算。</p>
     <p>除了<strong>修練</strong>外，其餘技能需加入宗門後才能使用。未加入宗門的玩家被稱為<strong>散修</strong>。加入後，行動所獲得的經驗將轉化為<strong>貢獻度</strong>，貢獻度可提升你的<strong>宗門位階</strong>（散修 → 外門弟子 → 內門弟子 → 長老……），具體階位請參考「運氣訓練工具」中的宗門位階列表。你可以選擇加入預設的 AI 宗門（目前共有 20 個，例如紫雲宗、青雲門、玄天宗、白玉宮等），或在未來達到條件後自行創建宗門。未來版本還可能開放宗門 PK 系統，敬請期待。</p>
-    <p>背包初始有 10 格，相同物品可疊加，例如「入品丹藥(10)」。日後可透過「儲物袋」提升背包空間。</p>
+    <p>背包初始有 10 格，相同物品可疊加，例如「入品丹藥(10)」。每項物品都會標示用途，可輸入數量批量使用。商店購買的體力丹會先進入背包；丹藥賣出價格固定為買入價的一半，奇數價格無條件捨去。</p>
+    <p><strong>大境界突破：</strong>每完成一個境界的十個小層後，下一個大境界必須消耗「突破丹」才能踏入。靈根越高，需要的突破丹越少；突破丹可透過煉丹獲得。</p>
     <p>點擊「查看修為等級一覽」可查看每個境界與小層所需的經驗值；點擊「宗門系統」可查看或加入宗門；點擊「遊戲說明」可再次閱讀本說明。</p>
 
     <h4>技能與資源詳解</h4>
@@ -401,6 +413,12 @@ const STAMINA_COST = {
   drawTalisman: 8,
   pill: 8,
   gear: 8
+};
+
+const SHOP_ITEMS = {
+  staminaSmall: {name:'小體力丹', cost:10, stamina:10, description:'恢復體力 10 點。'},
+  staminaMedium: {name:'中體力丹', cost:25, stamina:30, description:'恢復體力 30 點。'},
+  staminaLarge: {name:'大體力丹', cost:60, stamina:80, description:'恢復體力 80 點。'}
 };
 
 // 宗門位階里程碑：根據玩家累積的貢獻度提升宗門位階。
@@ -1072,6 +1090,7 @@ function updateUI() {
   // 修仙屬性與宗門
   document.getElementById('cult_root').innerText = player.cultivation.root;
   document.getElementById('cult_comprehension').innerText = player.cultivation.comprehension;
+  updateBreakthroughUI();
   // 更新宗門位階依照貢獻度
   updateSectRank();
   // 若未加入宗門則顯示散修
@@ -1141,19 +1160,10 @@ function finishAction(action) {
       if (addItemToBag('符咒', count)) gainSkillExp('drawTalisman', 4 * count);
       break;
   }
-  player.exp += expGain;
+  gainCultivationExp(expGain);
   // 若加入宗門則增加貢獻度（以獲得的經驗為基礎）
   if (player.joinedSect) {
     player.cultivation.contribution += expGain;
-  }
-  // 升級判斷
-  while (player.exp >= getExpNeeded(player.level)) {
-    player.exp -= getExpNeeded(player.level);
-    player.level++;
-    // 每次升級給予可支配點數，例如5點
-    player.attributePoints += 5;
-    // V1-8 角色升級時播放升級音效
-    playLevelUpSound();
   }
   activeActions = activeActions.filter(item => item !== action);
   alert(`${ACTION_LABELS[action.type]}批量 ${count} 次完成！` + (expGain ? ` 獲得修為值 +${expGain}` : ''));
@@ -1176,6 +1186,48 @@ function addItemToBag(name, qty) {
   return true;
 }
 
+
+function isBreakthroughReady() {
+  return player.level > 0 && player.level % 10 === 0 && player.exp >= getExpNeeded(player.level);
+}
+function getBreakthroughPillNeed() {
+  const realm = Math.floor(player.level / 10) + 1;
+  const root = player.cultivation.root || 1;
+  // 每個後續境界基礎需求增加，靈根每提升 2 點可少用 1 顆，最低一顆。
+  return Math.max(1, 3 + realm - Math.floor((root - 1) / 2));
+}
+function gainCultivationExp(amount) {
+  player.exp += amount;
+  while (player.exp >= getExpNeeded(player.level) && !isBreakthroughReady()) {
+    player.exp -= getExpNeeded(player.level);
+    player.level++;
+    player.attributePoints += 5;
+    playLevelUpSound();
+  }
+}
+function attemptBreakthrough() {
+  if (!isBreakthroughReady()) { alert('尚未達到大境界突破條件。'); return; }
+  const need = getBreakthroughPillNeed();
+  const owned = player.bag.items['突破丹'] || 0;
+  if (owned < need) { alert(`突破${getStage(player.level + 1)}需要突破丹 ${need} 顆；目前只有 ${owned} 顆。`); return; }
+  player.bag.items['突破丹'] -= need;
+  if (player.bag.items['突破丹'] <= 0) delete player.bag.items['突破丹'];
+  player.exp -= getExpNeeded(player.level);
+  player.level++;
+  player.attributePoints += 5;
+  playLevelUpSound();
+  alert(`突破成功！踏入${getStage(player.level)}，消耗突破丹 ${need} 顆。`);
+  save(); updateUI();
+}
+function updateBreakthroughUI() {
+  const panel = document.getElementById('breakthroughPanel');
+  if (!panel) return;
+  if (!isBreakthroughReady()) { panel.style.display = 'none'; return; }
+  const need = getBreakthroughPillNeed();
+  const owned = player.bag.items['突破丹'] || 0;
+  panel.style.display = 'block';
+  panel.innerHTML = `<strong>大境界突破：${getStage(player.level)} → ${getStage(player.level + 1)}</strong><br>靈根 ${player.cultivation.root}，需要突破丹 ${need} 顆（持有 ${owned} 顆）<br><button onclick="attemptBreakthrough()">消耗突破丹，嘗試突破</button>`;
+}
 
 // V1-9：取得技能升級所需經驗
 function getSkillExpNeeded(skillKey) {
@@ -1237,19 +1289,39 @@ function recoverStaminaByTime() {
   }
 }
 
-// V1-9：購買商店體力商品
+function getShopQuantity(itemKey) {
+  const input = document.getElementById('shopQty_' + itemKey);
+  return Math.max(1, Math.floor(Number(input && input.value) || 1));
+}
+function setShopMax(itemKey, mode) {
+  const item = SHOP_ITEMS[itemKey];
+  const input = document.getElementById('shopQty_' + itemKey);
+  if (!item || !input) return;
+  input.value = mode === 'buy' ? Math.floor(player.spiritStones / item.cost) : (player.bag.items[item.name] || 0);
+}
+// 商店購入：數量受靈石、背包格數與玩家輸入共同限制。
 function buyShopItem(itemKey) {
-  const items = {
-    staminaSmall: { name:'小體力丹', cost:10, stamina:10 },
-    staminaMedium: { name:'中體力丹', cost:25, stamina:30 },
-    staminaLarge: { name:'大體力丹', cost:60, stamina:80 }
-  };
-  const item = items[itemKey];
+  const item = SHOP_ITEMS[itemKey];
   if (!item) return;
-  if (player.spiritStones < item.cost) { alert('靈石不足'); return; }
-  if (!addItemToBag(item.name, 1)) return;
-  player.spiritStones -= item.cost;
-  alert(`購買${item.name}成功，已放入背包。`);
+  const count = getShopQuantity(itemKey);
+  const affordable = Math.floor(player.spiritStones / item.cost);
+  if (count > affordable || affordable < 1) { alert('靈石不足，無法購買這個數量。'); return; }
+  if (!addItemToBag(item.name, count)) return;
+  player.spiritStones -= item.cost * count;
+  alert(`購買${item.name} ${count} 個成功，已放入背包。`);
+  save(); updateUI();
+}
+function sellShopItem(itemKey) {
+  const item = SHOP_ITEMS[itemKey];
+  if (!item) return;
+  const count = getShopQuantity(itemKey);
+  const owned = player.bag.items[item.name] || 0;
+  if (count > owned || owned < 1) { alert(`背包中的${item.name}不足。`); return; }
+  const sellPrice = Math.floor(item.cost / 2);
+  player.bag.items[item.name] -= count;
+  if (player.bag.items[item.name] <= 0) delete player.bag.items[item.name];
+  player.spiritStones += sellPrice * count;
+  alert(`賣出${item.name} ${count} 個，獲得靈石 ${sellPrice * count}。`);
   save(); updateUI();
 }
 
@@ -1292,7 +1364,7 @@ function useBagItem(name, requestedCount) {
     alert(`使用${name} ${count} 個，恢復體力 ${restored}。`);
   } else if (name.includes('丹藥') || name.includes('聚氣丹') || name.includes('練氣丹')) {
     const gain = 50 * count;
-    player.exp += gain;
+    gainCultivationExp(gain);
     alert(`使用${name} ${count} 個，獲得修為值 +${gain}`);
   } else if (name.includes('符')) {
     player.stats.luck += count;
@@ -1305,6 +1377,15 @@ function useBagItem(name, requestedCount) {
   player.bag.items[name] -= count;
   if (player.bag.items[name] <= 0) delete player.bag.items[name];
   save(); updateUI();
+}
+
+function getItemDescription(name) {
+  const shopItem = Object.values(SHOP_ITEMS).find(item => item.name === name);
+  if (shopItem) return shopItem.description;
+  if (name === '突破丹') return '用於大境界突破；靈根越高，所需數量越少。';
+  if (name.includes('丹藥') || name.includes('聚氣丹') || name.includes('練氣丹')) return '每個可增加修為值 50。';
+  if (name.includes('符')) return '每張可增加運氣 1 點。';
+  return '目前尚未設定使用效果。';
 }
 
 function deleteBagItem(name) {
@@ -1331,6 +1412,9 @@ function updateBagUI() {
       const li = document.createElement('li');
       const title = document.createElement('strong');
       title.textContent = `${name} (${items[name]}) `;
+      const description = document.createElement('div');
+      description.className = 'item-description';
+      description.textContent = getItemDescription(name);
       const quantity = document.createElement('input');
       quantity.type = 'number'; quantity.min = '1'; quantity.max = String(items[name]); quantity.value = '1';
       quantity.setAttribute('aria-label', `${name}使用數量`); quantity.style.width = '58px';
@@ -1340,7 +1424,7 @@ function updateBagUI() {
       const deleteButton = document.createElement('button');
       deleteButton.textContent = '刪除';
       deleteButton.onclick = () => deleteBagItem(name);
-      li.append(title, quantity, useButton, deleteButton);
+      li.append(title, description, quantity, useButton, deleteButton);
       listEl.appendChild(li);
     });
   }
@@ -1357,7 +1441,7 @@ function startRefineBatch(type, count) {
     alert(`無法批量製作 ${count} 次；請確認體力與${material}是否足夠，目前最多 ${max} 次。`);
     return;
   }
-  if (type === 'pill' && !addItemToBag('入品丹藥', count)) return;
+  if (type === 'pill' && !addItemToBag('突破丹', count)) return;
   if (type === 'pill') {
     player.resources.herb -= 3 * count;
     gainSkillExp('alchemy', 10 * count);
@@ -1761,7 +1845,12 @@ function openSectPage() {
   showPage('sectPage');
 }
 
+window.addEventListener('scroll', () => {
+  const button = document.getElementById('backToTop');
+  if (button) button.style.display = window.scrollY > 260 ? 'block' : 'none';
+});
 load(); setInterval(tick, 1000); setInterval(recoverStaminaByTime, 10000); setInterval(regenStamina, 1000);
 </script>
+  <button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="回到頁面頂端">↑ 頂部</button>
 </body>
 </html>
