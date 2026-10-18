@@ -177,6 +177,11 @@
     <button onclick="exportSave()">匯出存檔</button>
     <input type="file" id="importFileMain" style="display:none" onchange="importSave(event)">
     <button onclick="document.getElementById('importFileMain').click()">匯入存檔</button>
+    <button id="autoCloudSyncButton" onclick="toggleAutoCloudSync()">自動雲端同步：開</button>
+    <button onclick="syncToCloud(true)">立即同步雲端</button>
+    <input type="file" id="cloudUploadFile" accept="application/json,.json" style="display:none" onchange="uploadLocalSaveToCloud(event)">
+    <button onclick="document.getElementById('cloudUploadFile').click()">手動上傳雲端存檔</button>
+    <button onclick="loadFromCloud()">下載雲端存檔</button>
     <button onclick="toggleCloudSyncPanel()">雲端同步設定</button>
     <div id="cloudSyncPanel" class="cloud-sync-panel" style="display:none">
       <h4>Google 雲端同步</h4>
@@ -639,6 +644,8 @@ ACTION_TIME.cutWood = 15;
 // 實際存檔仍保留在 localStorage，離線時可繼續遊玩。
 const CLOUD_ENDPOINT_KEY = 'xiuxian_v1_cloud_endpoint';
 const CLOUD_PLAYER_ID_KEY = 'xiuxian_v1_cloud_player_id';
+const CLOUD_AUTO_SYNC_KEY = 'xiuxian_v1_cloud_auto_sync';
+const DEFAULT_CLOUD_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzfOZWJOQEKdKR_4w2G1Oz5foCn-ofhE0ydF9SBsT8Ngt1SlKjA9ZQJxl7eYvZvKYro/exec';
 let cloudSyncTimer = null;
 let isLoadingCloud = false;
 
@@ -651,7 +658,8 @@ function getCloudPlayerId() {
   if (!id) { id = createCloudPlayerId(); localStorage.setItem(CLOUD_PLAYER_ID_KEY, id); }
   return id;
 }
-function getCloudEndpoint() { return (localStorage.getItem(CLOUD_ENDPOINT_KEY) || '').trim(); }
+function getCloudEndpoint() { return (localStorage.getItem(CLOUD_ENDPOINT_KEY) || DEFAULT_CLOUD_ENDPOINT).trim(); }
+function isAutoCloudSyncEnabled() { return localStorage.getItem(CLOUD_AUTO_SYNC_KEY) !== 'false'; }
 function setCloudStatus(message, isError) {
   const el = document.getElementById('cloudSyncStatus');
   if (!el) return;
@@ -662,9 +670,17 @@ function updateCloudSyncUI() {
   const endpoint = getCloudEndpoint();
   const endpointInput = document.getElementById('cloudEndpoint');
   const idInput = document.getElementById('cloudPlayerId');
+  const autoButton = document.getElementById('autoCloudSyncButton');
   if (endpointInput) endpointInput.value = endpoint;
   if (idInput) idInput.value = getCloudPlayerId();
-  setCloudStatus(endpoint ? '已設定。遊戲進度會在變更後自動上傳。' : '尚未設定雲端同步。', false);
+  if (autoButton) autoButton.textContent = '自動雲端同步：' + (isAutoCloudSyncEnabled() ? '開' : '關');
+  setCloudStatus(isAutoCloudSyncEnabled() ? '已設定，遊戲進度會在變更後自動上傳。' : '已設定，自動同步目前關閉。', false);
+}
+function toggleAutoCloudSync() {
+  const next = !isAutoCloudSyncEnabled();
+  localStorage.setItem(CLOUD_AUTO_SYNC_KEY, next ? 'true' : 'false');
+  updateCloudSyncUI();
+  if (next) syncToCloud(true);
 }
 function toggleCloudSyncPanel() {
   const panel = document.getElementById('cloudSyncPanel');
@@ -683,7 +699,7 @@ function saveCloudSettings() {
   updateCloudSyncUI();
 }
 function scheduleCloudSync() {
-  if (isLoadingCloud || !getCloudEndpoint()) return;
+  if (isLoadingCloud || !isAutoCloudSyncEnabled() || !getCloudEndpoint()) return;
   clearTimeout(cloudSyncTimer);
   cloudSyncTimer = setTimeout(() => syncToCloud(false), 1200);
 }
@@ -699,6 +715,26 @@ function syncToCloud(showMessage) {
   fetch(endpoint, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload) })
     .then(() => setCloudStatus('已送出雲端同步：' + new Date().toLocaleTimeString(), false))
     .catch(() => setCloudStatus('同步送出失敗，請檢查網路或部署網址。', true));
+}
+function uploadLocalSaveToCloud(event) {
+  const file = event.target.files && event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const uploadedPlayer = JSON.parse(reader.result);
+      if (!uploadedPlayer || typeof uploadedPlayer !== 'object') throw new Error('格式錯誤');
+      if (!confirm('要將選取的存檔上傳並覆蓋這個玩家的雲端存檔嗎？')) return;
+      const endpoint = getCloudEndpoint();
+      if (!endpoint) { setCloudStatus('請先設定同步網址。', true); return; }
+      const payload = { action:'save', playerId:getCloudPlayerId(), player:uploadedPlayer, activeActions:[], savedAt:new Date().toISOString() };
+      fetch(endpoint, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload) })
+        .then(() => setCloudStatus('手動存檔已送出到雲端。', false))
+        .catch(() => setCloudStatus('手動上傳失敗，請檢查網路。', true));
+    } catch (err) { setCloudStatus('讀取存檔失敗，請選擇正確的 JSON 存檔。', true); }
+  };
+  reader.readAsText(file);
 }
 function loadFromCloud() {
   const endpoint = getCloudEndpoint();
