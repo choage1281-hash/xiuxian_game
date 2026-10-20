@@ -243,6 +243,7 @@
   <!-- 背包頁面，預設隱藏 -->
   <div id="inventoryPage" class="panel" style="display:none">
     <h3>背包（已用 <span id="bagUsed">0</span> / <span id="bagCapacity">10</span> 格）</h3>
+    <label>物品分類：<select id="bagCategory" onchange="updateBagUI()"><option>全部</option><option>材料</option><option>丹藥</option><option>符箓</option><option>靈器</option><option>兵器</option><option>裝備</option><option>功法</option><option>陣法</option><option>丹藥配方</option><option>儲物</option><option>其他</option></select></label>
     <!-- 資源列表 -->
     <div id="resourceList">
       <span id="res_stone">礦石：0</span>
@@ -261,6 +262,7 @@
   <div id="shopPage" class="panel" style="display:none">
     <h3>商店</h3>
     <p>所有材料與物品均可買賣。商品的買入／賣出價會依品階計算，賣價為買價一半（無條件捨去）。</p>
+    <label>商品分類：<select id="shopCategory" onchange="renderShopCatalog()"><option>全部</option><option>材料</option><option>丹藥</option><option>符箓</option><option>靈器</option><option>兵器</option><option>裝備</option><option>功法</option><option>陣法</option><option>丹藥配方</option><option>儲物</option></select></label>
     <div class="shop-list" id="shopCatalog"></div>
     <button onclick="showPage('mainMenu')">返回主選單</button>
   </div>
@@ -286,6 +288,8 @@
     <p>背包初始有 10 格，相同物品可疊加，例如「入品丹藥(10)」。每項物品都會標示用途，可輸入數量批量使用。商店購買的體力丹會先進入背包；丹藥賣出價格固定為買入價的一半，奇數價格無條件捨去。</p>
     <p><strong>品階與商店：</strong>物品採用入品、下品、中品、上品、極品、超品、絕品、寶品、地品、天品十階。商店完整提供每一品階的丹藥、符箓、靈器、兵器、裝備、功法、陣法及丹藥配方，並可買賣材料。背包以「物品名稱＋品階」計算格數：同品階的同種物品可堆疊一格，不同品階則各占一格；賣出價格一律為買入價格的一半並無條件捨去。</p>
     <p><strong>恢復與儲物：</strong>補血丹恢復氣血、回靈丹恢復真氣；儲物袋使用後永久增加背包格數。角色的壽元會在修為值下方持續倒數，後續可透過境界突破、丹藥與功法延長壽元。</p>
+    <p><strong>分類與宗門上貢：</strong>商店與背包可依材料、丹藥、符箓、靈器、兵器、裝備、功法、陣法及丹藥配方篩選；商店提供各境界突破丹與對應配方。宗門上貢靈石可自行輸入數量或按「最大」，每顆靈石獲得 2 點貢獻。</p>
+    <p><strong>境界與壽元：</strong>到達各大境界十層即為圓滿，可直接準備突破，不必再累積修為或使用修為丹。成功突破凡人至練氣增加 10 年壽元，練氣至築基增加 100 年，築基至金丹增加 200 年，之後每個大境界依次多增加 100 年；突破失敗不增加壽元。</p>
     <p><strong>未來系統：</strong>靈寵與傀儡將用於擂台、決鬥與宗門對戰，並會擁有各自的品階、技能與培養路線。</p>
     <p><strong>煉丹、突破與雷劫：</strong>煉丹等級決定可煉製的最高品階，但已解鎖的低階丹藥仍可繼續煉製；例如煉丹 Lv.10 可煉製築基丹與全部較低階丹藥。每次煉丹都會依煉丹等級計算成功率，失敗會消耗材料。聚氣丹等一般丹藥不需要配方；大境界突破丹則每煉製一枚都要消耗一張對應配方與材料。凡人十層→練氣一層僅需練氣丹，不需渡劫；練氣十層→築基一層起，往後每次大境界突破都需要對應丹藥並渡過天道雷劫。靈根越高，需要的丹藥越少、雷劫成功率越高；雷劫失敗時會消耗丹藥，但不會提升境界。</p>
     <p>點擊「查看修為等級一覽」可查看每個境界與小層所需的經驗值；點擊「宗門系統」可查看或加入宗門；點擊「遊戲說明」可再次閱讀本說明。</p>
@@ -408,7 +412,7 @@ const SHOP_ITEMS = {
   staminaMedium: {name:'中體力丹', cost:25, stamina:30, description:'恢復體力 30 點。'},
   staminaLarge: {name:'大體力丹', cost:60, stamina:80, description:'恢復體力 80 點。'}
 };
-const BREAKTHROUGH_PILL_NAMES = ['練氣丹','築基丹','結丹丹','元嬰丹','化神丹','煉虛丹','合體丹','大乘丹','渡劫丹','真仙丹','金仙丹','太乙金丹','大羅丹'];
+const BREAKTHROUGH_PILL_NAMES = stageNames.slice(1).map((name,i) => (['練氣丹','築基丹','結丹丹','元嬰丹','化神丹','煉虛丹','合體丹','大乘丹','渡劫丹','真仙丹','金仙丹','太乙金丹','大羅丹'][i] || name + '丹'));
 const ITEM_GRADES = ['入品','下品','中品','上品','極品','超品','絕品','寶品','地品','天品'];
 const SHOP_CATALOG = [
   {id:'stone',name:'礦石',category:'材料',price:2,resource:'stone',description:'煉器與高階煉丹材料。'}, {id:'wood',name:'木材',category:'材料',price:2,resource:'wood',description:'煉器與日後陣法材料。'},
@@ -425,7 +429,12 @@ function buildCompleteGradeCatalog() {
   const types=[
     ['丹藥','聚氣丹',40,'增加修為值 50。'],['符箓','護身符',50,'可用於日後戰鬥與擂台。'],['靈器','護身靈器',180,'可交易的靈器。'],['兵器','青鋒劍',150,'可交易的兵器。'],['裝備','靈絲法衣',140,'可交易的裝備。'],['功法','吐納功法',220,'可交易的功法。'],['陣法','聚靈陣盤',200,'可交易的陣法。'],['丹藥配方','練氣丹配方',100,'煉製練氣丹的消耗性配方。']
   ];
-  return ITEM_GRADES.flatMap((grade,index)=>types.map(([category,base,price,description],typeIndex)=>({id:`all_${index}_${typeIndex}`,name:`${grade}·${base}`,category,price:price*(index+1)*(index+1),description})));
+  const generic=ITEM_GRADES.flatMap((grade,index)=>types.map(([category,base,price,description],typeIndex)=>({id:`all_${index}_${typeIndex}`,name:`${grade}·${base}`,category,price:price*(index+1)*(index+1),description})));
+  const breakthroughs=BREAKTHROUGH_PILL_NAMES.flatMap((pill,tier)=>ITEM_GRADES.flatMap((grade,index)=>[
+    {id:`bp_${tier}_${index}`,name:`${grade}·${pill}`,category:'丹藥',price:(tier+1)*100*(index+1)*(index+1),description:`突破對應境界所需丹藥。`},
+    {id:`recipe_${tier}_${index}`,name:`${grade}·${pill}配方`,category:'丹藥配方',price:(tier+1)*80*(index+1)*(index+1),description:`煉製${pill}時消耗一張。`}
+  ]));
+  return generic.concat(breakthroughs);
 }
 function getItemBaseName(name) { return String(name).replace(new RegExp('^(' + ITEM_GRADES.join('|') + ')·'), ''); }
 function getItemGrade(name) { return (String(name).match(new RegExp('^(' + ITEM_GRADES.join('|') + ')·')) || [])[1] || '入品'; }
@@ -777,7 +786,9 @@ function loadFromCloud() {
     script.remove(); delete window[callback];
     if (!result || !result.ok || !result.player) { setCloudStatus((result && result.error) || '雲端沒有找到此玩家存檔。', true); return; }
     isLoadingCloud = true;
+    const previousLifespan = player.lifespanEndAt;
     player = result.player;
+    if (!Number.isFinite(Number(player.lifespanEndAt)) || Number(player.lifespanEndAt) <= 0) player.lifespanEndAt = previousLifespan || Date.now() + 100 * 365 * 24 * 60 * 60 * 1000;
     activeActions = Array.isArray(result.activeActions) ? result.activeActions : [];
     migrateLegacyBreakthroughPills();
     save(); updateUI(); isLoadingCloud = false;
@@ -1107,9 +1118,10 @@ function updateUI() {
   document.getElementById('playerName').innerText = player.name || '-';
   document.getElementById('playerGender').innerText = player.gender || '-';
   document.getElementById('cultivationStage').innerText = getStage(player.level);
-  document.getElementById('exp').innerText = player.exp;
-  document.getElementById('expNeeded').innerText = getExpNeeded(player.level);
-  const expPercentValue = Math.min(100, Math.floor((player.exp / getExpNeeded(player.level)) * 100));
+  const realmComplete = player.level > 0 && player.level % 10 === 0;
+  document.getElementById('exp').innerText = realmComplete ? '圓滿' : player.exp;
+  document.getElementById('expNeeded').innerText = realmComplete ? '無須修練' : getExpNeeded(player.level);
+  const expPercentValue = realmComplete ? 100 : Math.min(100, Math.floor((player.exp / getExpNeeded(player.level)) * 100));
   const expBar = document.getElementById('expBar');
   if (expBar) expBar.style.width = expPercentValue + '%';
   const expPercent = document.getElementById('expPercent');
@@ -1183,6 +1195,7 @@ function startBatch(type, requestedCount) {
   const input = document.getElementById('batch_' + type);
   const count = Math.floor(Number(requestedCount || (input && input.value) || 1));
   if (!Number.isFinite(count) || count < 1) { alert('請輸入至少 1 次'); return; }
+  if (type === 'train' && player.level > 0 && player.level % 10 === 0) { alert('已達本境界十層圓滿，無須再修練。'); return; }
   if (type === 'pill' || type === 'gear') { startRefineBatch(type, count); return; }
   if (activeActions.length >= getActionSlotCount()) { alert(`進行中欄位已滿（目前可同時進行 ${getActionSlotCount()} 項）`); return; }
   // 檢查宗門條件，修練之外的技能需加入宗門
@@ -1250,7 +1263,7 @@ function addItemToBag(name, qty) {
 
 
 function isBreakthroughReady() {
-  return player.level > 0 && player.level % 10 === 0 && player.exp >= getExpNeeded(player.level);
+  return player.level > 0 && player.level % 10 === 0 && player.level < CULTIVATION_STAGES.length - 1;
 }
 function getBreakthroughPillNeed() {
   const realm = Math.floor(player.level / 10) + 1;
@@ -1264,8 +1277,9 @@ function getTribulationSuccessRate() {
   return realm <= 1 ? 100 : Math.max(15, Math.min(95, 88 - (realm - 1) * 7 + (root - 1) * 2));
 }
 function gainCultivationExp(amount) {
+  if (player.level > 0 && player.level % 10 === 0) return;
   player.exp += amount;
-  while (player.exp >= getExpNeeded(player.level) && !isBreakthroughReady()) {
+  while (player.level < CULTIVATION_STAGES.length - 1 && player.exp >= getExpNeeded(player.level) && !isBreakthroughReady()) {
     player.exp -= getExpNeeded(player.level);
     player.level++;
     player.attributePoints += 5;
@@ -1284,11 +1298,13 @@ function attemptBreakthrough() {
     alert(`天道雷劫降臨……突破失敗！${pill}已消耗，但境界未提升。（本次成功率 ${rate}%）`);
     save(); updateUI(); return;
   }
-  player.exp -= getExpNeeded(player.level);
+  const realm = Math.floor(player.level / 10);
+  const addedYears = realm === 1 ? 10 : (realm - 1) * 100;
+  player.lifespanEndAt = Math.max(Date.now(), Number(player.lifespanEndAt) || Date.now()) + addedYears * 365 * 24 * 60 * 60 * 1000;
   player.level++;
   player.attributePoints += 5;
   playLevelUpSound();
-  alert(rate < 100 ? `天道雷劫已過，突破成功！踏入${getStage(player.level)}，消耗${pill} ${need} 顆。` : `突破成功！踏入${getStage(player.level)}，消耗${pill} ${need} 顆（凡人進練氣不需渡劫）。`);
+  alert(rate < 100 ? `天道雷劫已過，突破成功！踏入${getStage(player.level)}，消耗${pill} ${need} 顆，壽元增加 ${addedYears} 年。` : `突破成功！踏入${getStage(player.level)}，消耗${pill} ${need} 顆，壽元增加 ${addedYears} 年（凡人進練氣不需渡劫）。`);
   save(); updateUI();
 }
 function updateBreakthroughUI() {
@@ -1365,7 +1381,10 @@ function recoverStaminaByTime() {
 
 function renderShopCatalog() {
   const list=document.getElementById('shopCatalog'); if(!list)return;
-  list.innerHTML=SHOP_CATALOG.map(item => `<div class="shop-item"><h4>${item.name}</h4><p class="item-description">【${item.category}】${item.description}</p><small>買入：${item.price} 靈石｜賣出：${Math.floor(item.price/2)} 靈石</small><div class="shop-controls"><input id="catalogQty_${item.id}" type="number" min="1" value="1" aria-label="${item.name}數量"><button onclick="setCatalogMax('${item.id}','buy')">買入最大</button><button onclick="tradeCatalog('${item.id}','buy')">買入</button><button onclick="setCatalogMax('${item.id}','sell')">賣出最大</button><button onclick="tradeCatalog('${item.id}','sell')">賣出</button></div></div>`).join('');
+  const select=document.getElementById('shopCategory'), category=select?select.value:'全部';
+  if (list.dataset.renderedCategory === category) return;
+  list.dataset.renderedCategory = category;
+  list.innerHTML=SHOP_CATALOG.filter(item=>category==='全部'||item.category===category).map(item => `<div class="shop-item"><h4>${item.name}</h4><p class="item-description">【${item.category}】${item.description}</p><small>買入：${item.price} 靈石｜賣出：${Math.floor(item.price/2)} 靈石</small><div class="shop-controls"><input id="catalogQty_${item.id}" type="number" min="1" value="1" aria-label="${item.name}數量"><button onclick="setCatalogMax('${item.id}','buy')">買入最大</button><button onclick="tradeCatalog('${item.id}','buy')">買入</button><button onclick="setCatalogMax('${item.id}','sell')">賣出最大</button><button onclick="tradeCatalog('${item.id}','sell')">賣出</button></div></div>`).join('');
 }
 function getCatalogItem(id){return SHOP_CATALOG.find(item=>item.id===id)}
 function catalogOwned(item){return item.resource ? (player.resources[item.resource]||0) : (player.bag.items[item.name]||0)}
@@ -1442,6 +1461,7 @@ function useBagItem(name, requestedCount) {
   let count = Math.max(1, Math.floor(Number(requestedCount) || 1));
   count = Math.min(count, owned);
   let used = true;
+  if (baseName.includes('配方')) { alert('丹藥配方用於煉丹，無法直接使用。'); return; }
   if (baseName.includes('體力丹')) {
     const gain = baseName.includes('大') ? 80 : (baseName.includes('中') ? 30 : 10);
     const missing = Math.max(0, player.stats.maxStamina - player.stats.stamina);
@@ -1457,7 +1477,10 @@ function useBagItem(name, requestedCount) {
     const missing=Math.max(0,player.stats.maxMp-player.stats.mp); if(!missing){alert('真氣已滿。');return;} count=Math.min(count,Math.ceil(missing/50)); const restored=Math.min(missing,50*count); player.stats.mp+=restored; alert(`使用${name} ${count} 個，恢復真氣 ${restored}。`);
   } else if (baseName.includes('儲物袋')) {
     player.bag.capacity += 5 * count; alert(`使用${name} ${count} 個，背包增加 ${5*count} 格。`);
+  } else if (BREAKTHROUGH_PILL_NAMES.includes(baseName)) {
+    alert('突破丹需在玩家資訊的突破面板使用。'); return;
   } else if (baseName.includes('丹藥') || baseName.includes('聚氣丹') || baseName.includes('練氣丹')) {
+    if (player.level > 0 && player.level % 10 === 0) { alert('已達本境界十層圓滿，不需再使用修為丹藥。'); return; }
     const gain = 50 * count;
     gainCultivationExp(gain);
     alert(`使用${name} ${count} 個，獲得修為值 +${gain}`);
@@ -1497,6 +1520,17 @@ function getItemDescription(name) {
   if (baseName.includes('符')) return '每張可增加運氣 1 點。';
   return '目前尚未設定使用效果。';
 }
+function getItemCategory(name) {
+  const base=getItemBaseName(name); const item=SHOP_CATALOG.find(x=>getItemBaseName(x.name)===base);
+  if(item)return item.category;
+  if(base.includes('配方'))return '丹藥配方';
+  if(base.includes('丹'))return '丹藥';
+  if(base.includes('符'))return '符箓';
+  if(base.includes('儲物袋'))return '儲物';
+  if(base.includes('功法'))return '功法'; if(base.includes('陣'))return '陣法';
+  if(base.includes('靈器'))return '靈器'; if(base.includes('武器')||base.includes('劍'))return '兵器'; if(base.includes('裝備')||base.includes('法衣'))return '裝備';
+  return '其他';
+}
 
 function deleteBagItem(name) {
   if (!player.bag || !player.bag.items[name]) return;
@@ -1512,7 +1546,9 @@ function updateBagUI() {
   // 清空列表
   listEl.innerHTML = '';
   const items = player.bag.items;
-  const keys = Object.keys(items);
+  const select=document.getElementById('bagCategory'), category=select?select.value:'全部';
+  const resources=document.getElementById('resourceList'); if(resources)resources.style.display=(category==='全部'||category==='材料')?'':'none';
+  const keys = Object.keys(items).filter(name=>category==='全部'||getItemCategory(name)===category);
   if (keys.length === 0) {
     const li = document.createElement('li');
     li.innerText = '（空）';
@@ -1818,9 +1854,10 @@ function showSectRanking(){
   d.innerHTML='<h4>宗門排行榜</h4><ol>'+arr.map(x=>`<li>${x.name}：${x.contribution}</li>`).join('')+'</ol>';
 }
 function tributeSect(){
-  if(player.spiritStones<10){alert('靈石不足，至少需要10靈石上貢');return;}
-  player.spiritStones-=10; player.cultivation.contribution+=20; save(); updateUI(); renderSectInfo(); alert('上貢10靈石，獲得20貢獻度');
+  const d=document.getElementById('sectDetail'); if(!d)return;
+  d.innerHTML=`<h4>宗門上貢</h4><p>每 1 靈石換取 2 貢獻度，目前持有 ${player.spiritStones} 靈石。</p><label>上貢數量：<input id="tributeAmount" type="number" min="1" value="1"></label> <button onclick="document.getElementById('tributeAmount').value=player.spiritStones">最大</button> <button onclick="submitTribute()">確認上貢</button>`;
 }
+function submitTribute(){const input=document.getElementById('tributeAmount'), amount=Number(input&&input.value);if(!Number.isSafeInteger(amount)||amount<1||amount>player.spiritStones){alert('請輸入有效數量，且不可超過持有的靈石。');return;}player.spiritStones-=amount;player.cultivation.contribution+=amount*2;save();updateUI();renderSectInfo();alert(`上貢 ${amount} 靈石，獲得 ${amount*2} 貢獻度。`);}
 function showContributionExchange(){
   const d=document.getElementById('sectDetail'); if(!d)return;
   let html='<h4>兌換貢獻</h4><p>可兌換宗門資源：靈石、丹藥、武器、裝備、飾品、靈器、符箓、宗門位階。</p><ul>';
