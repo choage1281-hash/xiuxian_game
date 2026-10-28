@@ -99,7 +99,8 @@
   .shop-controls { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:9px; }
   .shop-controls input { width:62px; padding:7px 4px; border:1px solid #b8c9b8; border-radius:6px; text-align:center; }
   .shop-controls button { display:inline-block !important; width:auto !important; margin:0 !important; padding:8px 10px !important; }
-  #backToTop { position:fixed; right:22px; bottom:22px; z-index:20; display:none; border:0; border-radius:999px; padding:11px 14px; background:#314c78; color:#fff; box-shadow:0 3px 10px rgba(0,0,0,.22); cursor:pointer; }
+  #backToTop,#backToBottom { position:fixed; right:22px; z-index:20; border:0; border-radius:999px; padding:11px 14px; background:#314c78; color:#fff; box-shadow:0 3px 10px rgba(0,0,0,.22); cursor:pointer; }
+  #backToTop { bottom:22px; display:none; } #backToBottom { bottom:70px; }
   @media (max-width:600px) { .exp-wrap,.stat-wrap { width:135px; } .panel { padding:9px; } }
 </style>
 </head>
@@ -121,9 +122,9 @@
     <!-- 靈石 -->
     <strong>靈石：</strong><span id="spiritStones">0</span><br>
     <!-- 氣血值/真氣值/體力值 -->
-    <strong>氣血值：</strong><span id="attr_hp">100</span> / <span id="attr_maxHp">100</span><span class="stat-wrap"><span id="hpBar" class="stat-bar hp-bar"></span></span><br>
-    <strong>真氣值：</strong><span id="attr_mp">100</span> / <span id="attr_maxMp">100</span><span class="stat-wrap"><span id="mpBar" class="stat-bar mp-bar"></span></span><br>
-    <strong>體力值：</strong><span id="attr_stamina">100</span> / <span id="attr_maxStamina">100</span><span class="stat-wrap"><span id="staminaBar" class="stat-bar stamina-bar"></span></span><br>
+    <strong>氣血值：</strong><span id="attr_hp">100</span> / <span id="attr_maxHp">100</span><span class="stat-wrap"><span id="hpBar" class="stat-bar hp-bar"></span></span> <small id="hpFullTime"></small><br>
+    <strong>真氣值：</strong><span id="attr_mp">100</span> / <span id="attr_maxMp">100</span><span class="stat-wrap"><span id="mpBar" class="stat-bar mp-bar"></span></span> <small id="mpFullTime"></small><br>
+    <strong>體力值：</strong><span id="attr_stamina">100</span> / <span id="attr_maxStamina">100</span><span class="stat-wrap"><span id="staminaBar" class="stat-bar stamina-bar"></span></span> <small id="staminaFullTime"></small><br>
     <!-- 被動屬性 -->
     <strong>攻擊：</strong><span id="attr_attack">5</span> /
     <strong>防禦：</strong><span id="attr_defense">5</span><br>
@@ -678,6 +679,8 @@ let player = {
     drawTalisman: { level: 1, exp: 0 }
   },
   lastStaminaRegen: Date.now(),
+  lastHpRegen: Date.now(),
+  lastMpRegen: Date.now(),
   lifespanEndAt: Date.now() + 100 * 365 * 24 * 60 * 60 * 1000,
   // 靈石與屬性
   spiritStones: 0,
@@ -879,6 +882,8 @@ function load() {
         if (player.skillExp[k].exp === undefined) player.skillExp[k].exp = 0;
       });
       if (!player.lastStaminaRegen) player.lastStaminaRegen = Date.now();
+      if (!player.lastHpRegen) player.lastHpRegen = Date.now();
+      if (!player.lastMpRegen) player.lastMpRegen = Date.now();
       if (!player.lifespanEndAt) player.lifespanEndAt = Date.now() + 100 * 365 * 24 * 60 * 60 * 1000;
       player.spiritStones = player.spiritStones || 0;
       if (!player.stats) {
@@ -986,6 +991,8 @@ function resetGame() {
       drawTalisman: { level: 1, exp: 0 }
     },
     lastStaminaRegen: Date.now(),
+    lastHpRegen: Date.now(),
+    lastMpRegen: Date.now(),
     lifespanEndAt: Date.now() + 100 * 365 * 24 * 60 * 60 * 1000,
     spiritStones: 0,
     stats: {
@@ -1104,17 +1111,20 @@ function renderExplorePage() {
   list.innerHTML=EXPLORE_DUNGEONS.map(dungeon=>{
     const available=player.level>=dungeon.minLevel, playerElement=getMainElement(player.cultivation.elements), relation=getElementRelation(playerElement,dungeon.element);
     const strategyButtons=Object.entries(EXPLORE_STRATEGIES).map(([key,strategy])=>`<button ${available?'':'disabled'} onclick="startExploration('${dungeon.id}','${key}')">${strategy.name}<br><small>勝率 ${getExploreSuccessRate(dungeon,strategy)}%</small></button>`).join(' ');
-    return `<div class="shop-item"><h4>${dungeon.name}</h4><p class="item-description">敵方主屬性：${dungeon.element}｜${dungeon.description}<br>你的${playerElement}屬性對其為「${relation.label}」；消耗體力 ${dungeon.stamina}，時間 ${dungeon.time} 秒。</p><small>${available?'選擇策略開始探險。':`需達到 ${getStage(dungeon.minLevel)} 才能進入。`}</small><div class="shop-controls">${strategyButtons}</div></div>`;
+    return `<div class="shop-item"><h4>${dungeon.name}</h4><p class="item-description">敵方主屬性：${dungeon.element}｜${dungeon.description}<br>你的${playerElement}屬性對其為「${relation.label}」；每次消耗體力 ${dungeon.stamina}，時間 ${dungeon.time} 秒。</p><small>${available?'輸入批量次數後選擇策略。':`需達到 ${getStage(dungeon.minLevel)} 才能進入。`}</small><div class="shop-controls"><input id="exploreQty_${dungeon.id}" type="number" min="1" value="1" aria-label="${dungeon.name}探險次數"><button ${available?'':'disabled'} onclick="fillMaxExplore('${dungeon.id}')">最大</button>${strategyButtons}</div></div>`;
   }).join('');
 }
+function fillMaxExplore(dungeonId) { const dungeon=getExploreDungeon(dungeonId),input=document.getElementById('exploreQty_'+dungeonId);if(dungeon&&input)input.value=Math.max(1,Math.floor(player.stats.stamina/dungeon.stamina)); }
 function startExploration(dungeonId,strategyId) {
   const dungeon=getExploreDungeon(dungeonId),strategy=EXPLORE_STRATEGIES[strategyId];
   if(!dungeon||!strategy||player.level<dungeon.minLevel)return;
+  const input=document.getElementById('exploreQty_'+dungeonId),count=Math.floor(Number(input&&input.value)||1);
+  if(!Number.isSafeInteger(count)||count<1){alert('請輸入至少 1 次探險。');return;}
   if(activeActions.length>=getActionSlotCount()){alert(`進行中欄位已滿（目前可同時進行 ${getActionSlotCount()} 項）`);return;}
-  if(player.stats.stamina<dungeon.stamina){alert(`體力不足，進入${dungeon.name}需要 ${dungeon.stamina} 點體力。`);return;}
-  player.stats.stamina-=dungeon.stamina;
-  const now=Date.now(); activeActions.push({type:'explore',count:1,startTime:now,endTime:now+dungeon.time*1000,name:`探險|${dungeon.id}|${strategyId}`});
-  save();updateUI();alert(`已進入${dungeon.name}，採用${strategy.name}。`);
+  if(player.stats.stamina<dungeon.stamina*count){alert(`體力不足；${dungeon.name}目前最多可批量探險 ${Math.floor(player.stats.stamina/dungeon.stamina)} 次。`);return;}
+  player.stats.stamina-=dungeon.stamina*count;
+  const now=Date.now(); activeActions.push({type:'explore',count,startTime:now,endTime:now+dungeon.time*count*1000,name:`探險|${dungeon.id}|${strategyId}`});
+  save();updateUI();alert(`已進入${dungeon.name} ${count} 次，採用${strategy.name}。`);
 }
 const SKILL_CARDS = [
   ['train','修練','獲得修為值'], ['mine','採礦','獲得礦石'], ['cutWood','砍柴','獲得木材'],
@@ -1223,6 +1233,7 @@ function updateUI() {
   if (staminaEl) staminaEl.innerText = Math.floor(player.stats.stamina);
   const maxStaminaEl = document.getElementById('attr_maxStamina');
   if (maxStaminaEl) maxStaminaEl.innerText = Math.floor(player.stats.maxStamina);
+  updateRecoveryEstimates();
   updateStatBars();
   updateSkillExpUI();
   document.getElementById('attr_attack').innerText = player.stats.attack;
@@ -1331,18 +1342,19 @@ function finishAction(action) {
 function finishExploration(action) {
   const meta=getExploreMetadata(action),dungeon=meta&&meta.dungeon,strategy=meta&&meta.strategy;
   if(!dungeon||!strategy){activeActions=activeActions.filter(item=>item!==action);save();updateUI();return;}
-  const rate=getExploreSuccessRate(dungeon,strategy),success=Math.random()*100<rate;
+  const rate=getExploreSuccessRate(dungeon,strategy),count=Math.max(1,Number(action.count)||1);
   const playerElement=getMainElement(player.cultivation.elements),relation=getElementRelation(playerElement,dungeon.element);
   const baseDamage=Math.max(3,Math.floor((14+(dungeon.minLevel/2))*strategy.damage));
-  player.stats.hp=Math.max(1,player.stats.hp-(success?Math.floor(baseDamage/2):baseDamage));
-  player.stats.mp=Math.max(0,player.stats.mp-(success?6:12));
-  let message='';
-  if(success){
-    const rewards=Object.entries(dungeon.rewards).map(([key,value])=>[key,Math.max(1,Math.floor(value*strategy.reward))]);
-    rewards.forEach(([key,value])=>{if(key==='spiritStones')player.spiritStones+=value;else player.resources[key]=(player.resources[key]||0)+value;});
-    const text=rewards.map(([key,value])=>`${key==='spiritStones'?'靈石':({stone:'礦石',wood:'木材',herb:'靈草'}[key]||key)} ×${value}`).join('、');
-    message=`探險成功！${relation.label}，勝率 ${rate}%。獲得 ${text}；氣血 -${Math.floor(baseDamage/2)}、真氣 -6。`;
-  } else message=`探險失敗，${relation.label}，本次勝率 ${rate}%。你安全撤離，氣血 -${baseDamage}、真氣 -12，未獲得秘境獎勵。`;
+  let successCount=0,hpLoss=0,mpLoss=0; const rewardsTotal={};
+  for(let i=0;i<count;i++){
+    const success=Math.random()*100<rate,damage=success?Math.floor(baseDamage/2):baseDamage;
+    hpLoss+=damage;mpLoss+=success?6:12;
+    if(success){successCount++;Object.entries(dungeon.rewards).forEach(([key,value])=>rewardsTotal[key]=(rewardsTotal[key]||0)+Math.max(1,Math.floor(value*strategy.reward)));}
+  }
+  player.stats.hp=Math.max(1,player.stats.hp-hpLoss); player.stats.mp=Math.max(0,player.stats.mp-mpLoss);
+  Object.entries(rewardsTotal).forEach(([key,value])=>{if(key==='spiritStones')player.spiritStones+=value;else player.resources[key]=(player.resources[key]||0)+value;});
+  const text=Object.entries(rewardsTotal).map(([key,value])=>`${key==='spiritStones'?'靈石':({stone:'礦石',wood:'木材',herb:'靈草'}[key]||key)} ×${value}`).join('、');
+  const message=`${dungeon.name}批量探險 ${count} 次結算：成功 ${successCount} 次、失敗 ${count-successCount} 次。${relation.label}，單次勝率 ${rate}%。${text?`獲得 ${text}；`:''}氣血 -${hpLoss}、真氣 -${mpLoss}。`;
   activeActions=activeActions.filter(item=>item!==action);save();updateUI();alert(message);
 }
 
@@ -1487,16 +1499,32 @@ function updateStatBars() {
 }
 
 // V1-9：體力自動恢復，基礎每5分鐘恢復1點，體力屬性越高越快
+function getRecoveryInterval(type) {
+  const stat=type==='hp' ? player.stats.constitution : type==='mp' ? player.stats.spirit : player.stats.constitution;
+  return Math.max(60000,300000-((stat||1)-1)*10000);
+}
+function formatRecoveryTime(milliseconds) {
+  if(milliseconds<=0)return '已滿值';
+  const total=Math.ceil(milliseconds/1000),hours=Math.floor(total/3600),minutes=Math.floor((total%3600)/60),seconds=total%60;
+  return `預估滿值：${hours?hours+'時 ':''}${minutes?minutes+'分 ':''}${seconds}秒`;
+}
+function updateRecoveryEstimates() {
+  const now=Date.now();
+  [['hp','hpFullTime','maxHp','lastHpRegen'],['mp','mpFullTime','maxMp','lastMpRegen'],['stamina','staminaFullTime','maxStamina','lastStaminaRegen']].forEach(([key,id,maxKey,timeKey])=>{
+    const element=document.getElementById(id);if(!element)return;
+    const missing=Math.max(0,(player.stats[maxKey]||0)-(player.stats[key]||0));
+    const interval=getRecoveryInterval(key),elapsed=Math.max(0,now-(player[timeKey]||now));
+    element.textContent=missing?`（${formatRecoveryTime(Math.max(0,missing*interval-elapsed))}）`:'（已滿值）';
+  });
+}
 function recoverStaminaByTime() {
-  if (!player.lastStaminaRegen) player.lastStaminaRegen = Date.now();
-  const interval = Math.max(60000, 300000 - (player.stats.constitution - 1) * 10000);
-  const now = Date.now();
-  const gain = Math.floor((now - player.lastStaminaRegen) / interval);
-  if (gain > 0 && player.stats.stamina < player.stats.maxStamina) {
-    player.stats.stamina = Math.min(player.stats.maxStamina, player.stats.stamina + gain);
-    player.lastStaminaRegen += gain * interval;
-    save(); updateUI();
-  }
+  const now=Date.now(); let changed=false;
+  [['hp','maxHp','lastHpRegen'],['mp','maxMp','lastMpRegen'],['stamina','maxStamina','lastStaminaRegen']].forEach(([key,maxKey,timeKey])=>{
+    if(!player[timeKey])player[timeKey]=now;
+    const interval=getRecoveryInterval(key),gain=Math.floor((now-player[timeKey])/interval);
+    if(gain>0){player.stats[key]=Math.min(player.stats[maxKey],player.stats[key]+gain);player[timeKey]+=gain*interval;changed=true;}
+  });
+  if(changed){save();updateUI();}else updateRecoveryEstimates();
 }
 
 function renderShopCatalog() {
@@ -2139,8 +2167,9 @@ window.addEventListener('scroll', () => {
   const button = document.getElementById('backToTop');
   if (button) button.style.display = window.scrollY > 260 ? 'block' : 'none';
 });
-load(); setInterval(tick, 1000); setInterval(recoverStaminaByTime, 10000); setInterval(regenStamina, 1000);
+load(); setInterval(tick, 1000); setInterval(recoverStaminaByTime, 10000); setInterval(updateRecoveryEstimates, 1000);
 </script>
+  <button id="backToBottom" onclick="window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})" aria-label="前往頁面底部">↓ 底部</button>
   <button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="回到頁面頂端">↑ 頂部</button>
 </body>
 </html>
