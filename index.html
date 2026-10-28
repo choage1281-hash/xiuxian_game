@@ -139,6 +139,8 @@
     <!-- 修仙屬性 -->
     <strong>靈根：</strong><span id="cult_root">1</span> /
     <strong>悟性：</strong><span id="cult_comprehension">1</span><br>
+    <strong>靈性屬性：</strong><span id="cult_elements">無</span><br>
+    <small id="elementHint">五行相生相剋將在秘境戰鬥中生效。</small><br>
     <!-- 宗門狀態、位階與貢獻度 -->
     <strong>宗門狀態：</strong><span id="sectStatus">未加入</span><br>
     <strong>宗門位階：</strong><span id="cult_sectRank">普通弟子</span><br>
@@ -172,6 +174,7 @@
     <strong>體力：</strong><span id="start_attr_constitution">1</span> <button onclick="allocateAttribute('constitution')">＋</button><br>
     <strong>精神：</strong><span id="start_attr_spirit">1</span> <button onclick="allocateAttribute('spirit')">＋</button> /
     <strong>魅力：</strong><span id="start_attr_charisma">1</span> <button onclick="allocateAttribute('charisma')">＋</button><br>
+    <label>主靈根屬性：<select id="inputElement"><option value="金">金</option><option value="木">木</option><option value="水">水</option><option value="火" selected>火</option><option value="土">土</option><option value="雷">雷</option><option value="冰">冰</option><option value="風">風</option><option value="毒">毒</option><option value="空間">空間</option><option value="時間">時間</option><option value="光">光</option><option value="暗">暗</option><option value="天">天</option><option value="混沌">混沌</option></select></label><br>
     <button onclick="confirmStart()">開始遊戲</button>
   </div>
 
@@ -290,6 +293,7 @@
     <p><strong>恢復與儲物：</strong>補血丹恢復氣血、回靈丹恢復真氣；儲物袋使用後永久增加背包格數。角色的壽元會在修為值下方持續倒數，後續可透過境界突破、丹藥與功法延長壽元。</p>
     <p><strong>分類與宗門上貢：</strong>商店與背包可依材料、丹藥、符箓、靈器、兵器、裝備、功法、陣法及丹藥配方篩選；商店提供各境界突破丹與對應配方。宗門上貢靈石可自行輸入數量或按「最大」，每顆靈石獲得 2 點貢獻。</p>
     <p><strong>境界與壽元：</strong>到達各大境界十層即為圓滿，可直接準備突破，不必再累積修為或使用修為丹。成功突破凡人至練氣增加 10 年壽元，練氣至築基增加 100 年，築基至金丹增加 200 年，之後每個大境界依次多增加 100 年；突破失敗不增加壽元。</p>
+    <p><strong>靈性屬性：</strong>玩家、靈根、功法、靈器、符箓、陣法及未來的靈獸可具有金、木、水、火、土、雷、冰、風、毒、空間、時間、光、暗、天、混沌等屬性。五行採金生水、水生木、木生火、火生土、土生金；金克木、木克土、土克水、水克火、火克金。未來秘境戰鬥中，同屬性共鳴、相生搭配與相剋攻擊會提供加成；遭到克制則會受到減益。特殊屬性各有獨立效果，例如雷對雷劫有利、冰偏向控制、空間偏向閃避與儲物、時間影響冷卻與秘境時間、天提供泛用增益、混沌具多屬性相容性。</p>
     <p><strong>突破丹品階：</strong>突破前須選擇一種品階，所有所需丹藥必須屬於同一品階，不可混用；未標示品階的舊丹藥視為入品。成功突破時，除原有 5 點可支配點數外，依入品至天品的順序，分別額外獲得 1 至 10 點可支配點數，及 10 至 100 點氣血上限與真氣上限（每升一品各增加 10 點）。加成永久累積；突破失敗仍消耗選定的丹藥，但不獲得加成。品階不影響雷劫成功率。</p>
     <p><strong>未來系統：</strong>靈寵與傀儡將用於擂台、決鬥與宗門對戰，並會擁有各自的品階、技能與培養路線。</p>
     <p><strong>煉丹、突破與雷劫：</strong>煉丹等級決定可煉製的最高品階，但已解鎖的低階丹藥仍可繼續煉製；例如煉丹 Lv.10 可煉製築基丹與全部較低階丹藥。每次煉丹都會依煉丹等級計算成功率，失敗會消耗材料。聚氣丹等一般丹藥不需要配方；大境界突破丹則每煉製一枚都要消耗一張對應配方與材料。凡人十層→練氣一層僅需練氣丹，不需渡劫；練氣十層→築基一層起，往後每次大境界突破都需要對應丹藥並渡過天道雷劫。靈根越高，需要的丹藥越少、雷劫成功率越高；雷劫失敗時會消耗丹藥，但不會提升境界。</p>
@@ -415,6 +419,31 @@ const SHOP_ITEMS = {
 };
 const BREAKTHROUGH_PILL_NAMES = stageNames.slice(1).map((name,i) => (['練氣丹','築基丹','結丹丹','元嬰丹','化神丹','煉虛丹','合體丹','大乘丹','渡劫丹','真仙丹','金仙丹','太乙金丹','大羅丹'][i] || name + '丹'));
 const ITEM_GRADES = ['入品','下品','中品','上品','極品','超品','絕品','寶品','地品','天品'];
+const ELEMENTS = ['金','木','水','火','土','雷','冰','風','毒','空間','時間','光','暗','天','混沌'];
+const ELEMENT_GENERATES = {金:'水',水:'木',木:'火',火:'土',土:'金'};
+const ELEMENT_OVERCOMES = {金:'木',木:'土',土:'水',水:'火',火:'金'};
+const SPECIAL_ELEMENT_EFFECTS = {雷:'雷劫成功率與爆發潛力',冰:'控制與防禦',風:'速度與閃避',毒:'持續傷害與削弱',空間:'閃避、穿透與儲物',時間:'冷卻與秘境時間',光:'淨化與治療',暗:'隱匿與削弱',天:'泛用增益',混沌:'多屬性相容'};
+function normalizeElements(value) {
+  if (typeof value === 'string') { try { value = JSON.parse(value); } catch (_) { value = null; } }
+  const elements = value && typeof value === 'object' ? value : {};
+  const valid = Object.fromEntries(Object.entries(elements).filter(([element, power]) => ELEMENTS.includes(element) && Number(power) > 0).map(([element,power]) => [element, Math.floor(Number(power))]));
+  return Object.keys(valid).length ? valid : {火:100};
+}
+function getMainElement(elements) { return Object.entries(normalizeElements(elements)).sort((a,b)=>b[1]-a[1])[0][0]; }
+function getElementRelation(attacker, defender) {
+  if (attacker === defender) return {type:'resonance', multiplier:1.15, label:'同屬性共鳴'};
+  if (ELEMENT_OVERCOMES[attacker] === defender) return {type:'overcome', multiplier:1.25, label:'屬性相剋'};
+  if (ELEMENT_OVERCOMES[defender] === attacker) return {type:'countered', multiplier:0.8, label:'受到屬性克制'};
+  if (ELEMENT_GENERATES[attacker] === defender) return {type:'generate', multiplier:1.1, label:'相生搭配'};
+  return {type:'neutral', multiplier:1, label:'屬性平衡'};
+}
+function formatElements(elements) { return Object.entries(normalizeElements(elements)).sort((a,b)=>b[1]-a[1]).map(([name,power])=>`${name} ${power}`).join('／'); }
+function getItemElements(name) {
+  const item=SHOP_CATALOG.find(entry=>entry.name===name); if(item && item.elements) return item.elements;
+  const text=getItemBaseName(name);
+  const match=ELEMENTS.find(element=>text.includes(element));
+  return match ? {[match]:100} : null;
+}
 const SHOP_CATALOG = [
   {id:'stone',name:'礦石',category:'材料',price:2,resource:'stone',description:'煉器與高階煉丹材料。'}, {id:'wood',name:'木材',category:'材料',price:2,resource:'wood',description:'煉器與日後陣法材料。'},
   {id:'herb',name:'靈草',category:'材料',price:4,resource:'herb',description:'煉丹主要材料。'}, {id:'meat',name:'獸肉',category:'材料',price:4,resource:'meat',description:'高階煉丹、靈寵飼養材料。'},
@@ -430,7 +459,7 @@ function buildCompleteGradeCatalog() {
   const types=[
     ['丹藥','聚氣丹',40,'增加修為值 50。'],['符箓','護身符',50,'可用於日後戰鬥與擂台。'],['靈器','護身靈器',180,'可交易的靈器。'],['兵器','青鋒劍',150,'可交易的兵器。'],['裝備','靈絲法衣',140,'可交易的裝備。'],['功法','吐納功法',220,'可交易的功法。'],['陣法','聚靈陣盤',200,'可交易的陣法。'],['丹藥配方','練氣丹配方',100,'煉製練氣丹的消耗性配方。']
   ];
-  const generic=ITEM_GRADES.flatMap((grade,index)=>types.map(([category,base,price,description],typeIndex)=>({id:`all_${index}_${typeIndex}`,name:`${grade}·${base}`,category,price:price*(index+1)*(index+1),description})));
+  const generic=ITEM_GRADES.flatMap((grade,index)=>types.map(([category,base,price,description],typeIndex)=>({id:`all_${index}_${typeIndex}`,name:`${grade}·${base}`,category,price:price*(index+1)*(index+1),description,elements:typeIndex===1?{土:100}:typeIndex===2?{金:100}:typeIndex===3?{火:100}:typeIndex===4?{木:100}:typeIndex===5?{水:100}:typeIndex===6?{土:100}:null})));
   const breakthroughs=BREAKTHROUGH_PILL_NAMES.flatMap((pill,tier)=>ITEM_GRADES.flatMap((grade,index)=>[
     {id:`bp_${tier}_${index}`,name:`${grade}·${pill}`,category:'丹藥',price:(tier+1)*100*(index+1)*(index+1),description:`突破對應境界所需丹藥。`},
     {id:`recipe_${tier}_${index}`,name:`${grade}·${pill}配方`,category:'丹藥配方',price:(tier+1)*80*(index+1)*(index+1),description:`煉製${pill}時消耗一張。`}
@@ -659,6 +688,7 @@ let player = {
   cultivation: {
     root: 1,
     comprehension: 1,
+    elements: {火:100},
     sectRank: "普通弟子",
     // 玩家對宗門的貢獻度，用於提升宗門位階
     contribution: 0
@@ -873,10 +903,11 @@ function load() {
         player.stats.charisma = (player.stats.charisma !== undefined) ? player.stats.charisma : 1;
       }
       if (!player.cultivation) {
-        player.cultivation = {root:1, comprehension:1, sectRank:"普通弟子", contribution:0};
+        player.cultivation = {root:1, comprehension:1, elements:{火:100}, sectRank:"普通弟子", contribution:0};
       } else {
         player.cultivation.root = player.cultivation.root || 1;
         player.cultivation.comprehension = player.cultivation.comprehension || 1;
+        player.cultivation.elements = normalizeElements(player.cultivation.elements);
         player.cultivation.sectRank = player.cultivation.sectRank || "普通弟子";
         player.cultivation.contribution = (player.cultivation.contribution !== undefined) ? player.cultivation.contribution : 0;
       }
@@ -961,6 +992,7 @@ function resetGame() {
     cultivation: {
       root: 1,
       comprehension: 1,
+      elements: {火:100},
       sectRank: "普通弟子",
       contribution: 0
     },
@@ -1158,6 +1190,7 @@ function updateUI() {
   // 修仙屬性與宗門
   document.getElementById('cult_root').innerText = player.cultivation.root;
   document.getElementById('cult_comprehension').innerText = player.cultivation.comprehension;
+  const elementsEl=document.getElementById('cult_elements'); if(elementsEl) elementsEl.innerText=formatElements(player.cultivation.elements);
   updateBreakthroughUI();
   // 更新宗門位階依照貢獻度
   updateSectRank();
@@ -1404,7 +1437,7 @@ function renderShopCatalog() {
   const select=document.getElementById('shopCategory'), category=select?select.value:'全部';
   if (list.dataset.renderedCategory === category) return;
   list.dataset.renderedCategory = category;
-  list.innerHTML=SHOP_CATALOG.filter(item=>category==='全部'||item.category===category).map(item => `<div class="shop-item"><h4>${item.name}</h4><p class="item-description">【${item.category}】${item.description}</p><small>買入：${item.price} 靈石｜賣出：${Math.floor(item.price/2)} 靈石</small><div class="shop-controls"><input id="catalogQty_${item.id}" type="number" min="1" value="1" aria-label="${item.name}數量"><button onclick="setCatalogMax('${item.id}','buy')">買入最大</button><button onclick="tradeCatalog('${item.id}','buy')">買入</button><button onclick="setCatalogMax('${item.id}','sell')">賣出最大</button><button onclick="tradeCatalog('${item.id}','sell')">賣出</button></div></div>`).join('');
+  list.innerHTML=SHOP_CATALOG.filter(item=>category==='全部'||item.category===category).map(item => `<div class="shop-item"><h4>${item.name}</h4><p class="item-description">【${item.category}】${item.description}${item.elements?`<br>靈性屬性：${formatElements(item.elements)}`:''}</p><small>買入：${item.price} 靈石｜賣出：${Math.floor(item.price/2)} 靈石</small><div class="shop-controls"><input id="catalogQty_${item.id}" type="number" min="1" value="1" aria-label="${item.name}數量"><button onclick="setCatalogMax('${item.id}','buy')">買入最大</button><button onclick="tradeCatalog('${item.id}','buy')">買入</button><button onclick="setCatalogMax('${item.id}','sell')">賣出最大</button><button onclick="tradeCatalog('${item.id}','sell')">賣出</button></div></div>`).join('');
 }
 function getCatalogItem(id){return SHOP_CATALOG.find(item=>item.id===id)}
 function catalogOwned(item){return item.resource ? (player.resources[item.resource]||0) : (player.bag.items[item.name]||0)}
@@ -1534,7 +1567,7 @@ function setBagUseMax(name, input) {
 
 function getItemDescription(name) {
   const baseName=getItemBaseName(name); const shopItem=SHOP_CATALOG.find(item=>getItemBaseName(item.name)===baseName);
-  if (shopItem) return shopItem.description;
+  if (shopItem) return shopItem.description + (getItemElements(name) ? ` 靈性屬性：${formatElements(getItemElements(name))}。` : '');
   if (BREAKTHROUGH_PILL_NAMES.includes(baseName)) return '用於對應大境界突破；靈根越高，所需數量越少，並須面對天道雷劫。';
   if (baseName.includes('丹藥') || baseName.includes('聚氣丹') || baseName.includes('練氣丹')) return '每個可增加修為值 50。';
   if (baseName.includes('符')) return '每張可增加運氣 1 點。';
@@ -1717,6 +1750,8 @@ function confirmStart() {
   }
   player.name = name;
   player.gender = gender;
+  const elementInput = document.getElementById('inputElement');
+  player.cultivation.elements = normalizeElements({[(elementInput && elementInput.value) || '火']:100});
   // 隱藏創建面板
   document.getElementById('startPanel').style.display = 'none';
   // 顯示玩家資訊
