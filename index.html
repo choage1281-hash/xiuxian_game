@@ -1099,25 +1099,45 @@ function getExploreMetadata(action) {
   const parts=String(action.name||'').split('|');
   return parts[0]==='探險' ? {dungeon:getExploreDungeon(parts[1]), strategy:EXPLORE_STRATEGIES[parts[2]]||EXPLORE_STRATEGIES.balanced} : null;
 }
-function getExploreSuccessRate(dungeon, strategy) {
+function getExploreEquipmentBonus() {
+  const equipped=Object.values(player.equipment||{}).filter(Boolean);
+  return Math.min(15,equipped.reduce((total,name)=>total+Math.max(1,ITEM_GRADES.indexOf(getItemGrade(name))+1)*2,0));
+}
+function getExploreCombatStats(dungeon,strategy) {
   const playerElement=getMainElement(player.cultivation.elements);
   const relation=getElementRelation(playerElement,dungeon.element);
-  const realmBonus=Math.max(0,player.level-dungeon.minLevel)*1.2;
+  const stats=player.stats;
+  const hpPercent=Math.floor((stats.hp/stats.maxHp)*100),mpPercent=Math.floor((stats.mp/stats.maxMp)*100);
+  const realmBonus=Math.min(30,Math.max(0,player.level-dungeon.minLevel)*1.2);
+  const attackBonus=Math.min(15,Math.floor((stats.attack+stats.strength)/10));
+  const defenseBonus=Math.min(15,Math.floor((stats.defense+stats.constitution)/10));
+  const speedBonus=Math.min(10,Math.floor((stats.speed+stats.dexterity)/15));
+  const luckBonus=Math.min(10,Math.floor((stats.luck+stats.charisma)/15));
+  const mindBonus=Math.min(10,Math.floor((stats.intelligence+stats.spirit)/15));
+  const equipmentBonus=getExploreEquipmentBonus();
+  const statusBonus=hpPercent>=80&&mpPercent>=80?5:(hpPercent<50||mpPercent<50?-10:0);
   const specialBonus=playerElement==='天'?6:playerElement==='混沌'?4:0;
-  return Math.max(20,Math.min(95,Math.floor(dungeon.baseRate+strategy.rate+realmBonus+(relation.multiplier-1)*100+specialBonus)));
+  const rate=Math.max(20,Math.min(95,Math.floor(dungeon.baseRate+strategy.rate+realmBonus+attackBonus+defenseBonus+speedBonus+luckBonus+mindBonus+equipmentBonus+(relation.multiplier-1)*100+specialBonus+statusBonus)));
+  const estimatedDamage=Math.max(2,Math.floor((14+dungeon.minLevel/2)*strategy.damage-(stats.defense+stats.constitution)/12));
+  return {rate,relation,hpPercent,mpPercent,estimatedDamage,breakdown:[['秘境基礎',dungeon.baseRate],['境界',realmBonus],['攻擊＋力量',attackBonus],['防禦＋體力',defenseBonus],['速度＋敏捷',speedBonus],['運氣＋魅力',luckBonus],['智力＋精神',mindBonus],['裝備',equipmentBonus],['屬性關係',(relation.multiplier-1)*100],['狀態',statusBonus],['策略',strategy.rate],['特殊靈性',specialBonus]]};
 }
+function getExploreSuccessRate(dungeon,strategy) { return getExploreCombatStats(dungeon,strategy).rate; }
+function canExplore() { return player.stats.hp/player.stats.maxHp>=0.3 && player.stats.mp/player.stats.maxMp>=0.2; }
 function renderExplorePage() {
   const list=document.getElementById('exploreList'); if(!list)return;
   list.innerHTML=EXPLORE_DUNGEONS.map(dungeon=>{
     const available=player.level>=dungeon.minLevel, playerElement=getMainElement(player.cultivation.elements), relation=getElementRelation(playerElement,dungeon.element);
-    const strategyButtons=Object.entries(EXPLORE_STRATEGIES).map(([key,strategy])=>`<button ${available?'':'disabled'} onclick="startExploration('${dungeon.id}','${key}')">${strategy.name}<br><small>勝率 ${getExploreSuccessRate(dungeon,strategy)}%</small></button>`).join(' ');
-    return `<div class="shop-item"><h4>${dungeon.name}</h4><p class="item-description">敵方主屬性：${dungeon.element}｜${dungeon.description}<br>你的${playerElement}屬性對其為「${relation.label}」；每次消耗體力 ${dungeon.stamina}，時間 ${dungeon.time} 秒。</p><small>${available?'輸入批量次數後選擇策略。':`需達到 ${getStage(dungeon.minLevel)} 才能進入。`}</small><div class="shop-controls"><input id="exploreQty_${dungeon.id}" type="number" min="1" value="1" aria-label="${dungeon.name}探險次數"><button ${available?'':'disabled'} onclick="fillMaxExplore('${dungeon.id}')">最大</button>${strategyButtons}</div></div>`;
+    const balanced=getExploreCombatStats(dungeon,EXPLORE_STRATEGIES.balanced),statusReady=canExplore();
+    const strategyButtons=Object.entries(EXPLORE_STRATEGIES).map(([key,strategy])=>`<button ${available&&statusReady?'':'disabled'} onclick="startExploration('${dungeon.id}','${key}')">${strategy.name}<br><small>勝率 ${getExploreSuccessRate(dungeon,strategy)}%</small></button>`).join(' ');
+    const breakdown=balanced.breakdown.filter(([,value])=>value).map(([label,value])=>`${label} ${value>0?'+':''}${value}%`).join('｜')||'無額外修正';
+    return `<div class="shop-item"><h4>${dungeon.name}</h4><p class="item-description">敵方主屬性：${dungeon.element}｜${dungeon.description}<br>你的${playerElement}屬性對其為「${relation.label}」；每次消耗體力 ${dungeon.stamina}，時間 ${dungeon.time} 秒。<br><strong>均衡探索預估勝率：${balanced.rate}%</strong><br><small>${breakdown}</small><br><small>目前氣血 ${balanced.hpPercent}%｜真氣 ${balanced.mpPercent}%｜預估單次損耗：氣血 ${Math.floor(balanced.estimatedDamage/2)}～${balanced.estimatedDamage}、真氣 6～12</small></p><small>${!available?`需達到 ${getStage(dungeon.minLevel)} 才能進入。`:!statusReady?'氣血需至少 30%，真氣需至少 20% 才可探險。':'輸入批量次數後選擇策略。'}</small><div class="shop-controls"><input id="exploreQty_${dungeon.id}" type="number" min="1" value="1" aria-label="${dungeon.name}探險次數"><button ${available&&statusReady?'':'disabled'} onclick="fillMaxExplore('${dungeon.id}')">最大</button>${strategyButtons}</div></div>`;
   }).join('');
 }
 function fillMaxExplore(dungeonId) { const dungeon=getExploreDungeon(dungeonId),input=document.getElementById('exploreQty_'+dungeonId);if(dungeon&&input)input.value=Math.max(1,Math.floor(player.stats.stamina/dungeon.stamina)); }
 function startExploration(dungeonId,strategyId) {
   const dungeon=getExploreDungeon(dungeonId),strategy=EXPLORE_STRATEGIES[strategyId];
   if(!dungeon||!strategy||player.level<dungeon.minLevel)return;
+  if(!canExplore()){alert('目前氣血需至少 30%、真氣需至少 20% 才可進入秘境，請先休息或使用恢復丹藥。');return;}
   const input=document.getElementById('exploreQty_'+dungeonId),count=Math.floor(Number(input&&input.value)||1);
   if(!Number.isSafeInteger(count)||count<1){alert('請輸入至少 1 次探險。');return;}
   if(activeActions.length>=getActionSlotCount()){alert(`進行中欄位已滿（目前可同時進行 ${getActionSlotCount()} 項）`);return;}
@@ -1342,9 +1362,9 @@ function finishAction(action) {
 function finishExploration(action) {
   const meta=getExploreMetadata(action),dungeon=meta&&meta.dungeon,strategy=meta&&meta.strategy;
   if(!dungeon||!strategy){activeActions=activeActions.filter(item=>item!==action);save();updateUI();return;}
-  const rate=getExploreSuccessRate(dungeon,strategy),count=Math.max(1,Number(action.count)||1);
+  const combat=getExploreCombatStats(dungeon,strategy),rate=combat.rate,count=Math.max(1,Number(action.count)||1);
   const playerElement=getMainElement(player.cultivation.elements),relation=getElementRelation(playerElement,dungeon.element);
-  const baseDamage=Math.max(3,Math.floor((14+(dungeon.minLevel/2))*strategy.damage));
+  const baseDamage=combat.estimatedDamage;
   let successCount=0,hpLoss=0,mpLoss=0; const rewardsTotal={};
   for(let i=0;i<count;i++){
     const success=Math.random()*100<rate,damage=success?Math.floor(baseDamage/2):baseDamage;
