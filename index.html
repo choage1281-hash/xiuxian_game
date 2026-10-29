@@ -149,7 +149,8 @@
     <!-- 裝備資訊 -->
     <strong>裝備-武器：</strong><span id="equip_weapon">無</span><br>
     <strong>裝備-盔甲：</strong><span id="equip_armor">無</span><br>
-    <strong>裝備-飾品：</strong><span id="equip_accessory">無</span>
+    <strong>裝備-飾品／靈器：</strong><span id="equip_accessory">無</span>
+    <div id="equipmentDetail" style="margin-top:8px; font-size:.9em;"></div>
     <div id="breakthroughPanel" style="display:none; margin-top:12px; padding:10px; border:1px solid #e6c46a; border-radius:8px; background:#fff9e7;"></div>
     <!-- V1-12：常駐於玩家資訊底部，方便隨時查看任務進度 -->
     <div id="currentPanel" style="margin-top:12px; padding-top:10px; border-top:1px solid #dce6f4;">
@@ -299,6 +300,7 @@
     <p>除了<strong>修練</strong>外，其餘技能需加入宗門後才能使用。未加入宗門的玩家被稱為<strong>散修</strong>。加入後，行動所獲得的經驗將轉化為<strong>貢獻度</strong>，貢獻度可提升你的<strong>宗門位階</strong>（散修 → 外門弟子 → 內門弟子 → 長老……），具體階位請參考「運氣訓練工具」中的宗門位階列表。你可以選擇加入預設的 AI 宗門（目前共有 20 個，例如紫雲宗、青雲門、玄天宗、白玉宮等），或在未來達到條件後自行創建宗門。未來版本還可能開放宗門 PK 系統，敬請期待。</p>
     <p>背包初始有 10 格，相同物品可疊加，例如「入品丹藥(10)」。每項物品都會標示用途，可輸入數量批量使用。商店購買的體力丹會先進入背包；丹藥賣出價格固定為買入價的一半，奇數價格無條件捨去。</p>
     <p><strong>品階與商店：</strong>物品採用入品、下品、中品、上品、極品、超品、絕品、寶品、地品、天品十階。商店完整提供每一品階的丹藥、符箓、靈器、兵器、裝備、功法、陣法及丹藥配方，並可買賣材料。背包以「物品名稱＋品階」計算格數：同品階的同種物品可堆疊一格，不同品階則各占一格；賣出價格一律為買入價格的一半並無條件捨去。</p>
+    <p><strong>裝備：</strong>兵器可裝備於武器欄、法衣與盔甲可裝備於盔甲欄、靈器可裝備於飾品／靈器欄；替換裝備時，舊裝備會自動回到背包。裝備提供攻擊、防禦、氣血上限、真氣上限、速度、運氣與探險成功率。已裝備物品可花費靈石與礦石強化至 +10，每次強化必定成功；強化等級越高，基礎屬性與探險效果越高。</p>
     <p><strong>恢復與儲物：</strong>補血丹恢復氣血、回靈丹恢復真氣；儲物袋使用後永久增加背包格數。角色的壽元會在修為值下方持續倒數，後續可透過境界突破、丹藥與功法延長壽元。</p>
     <p><strong>分類與宗門上貢：</strong>商店與背包可依材料、丹藥、符箓、靈器、兵器、裝備、功法、陣法及丹藥配方篩選；商店提供各境界突破丹與對應配方。宗門上貢靈石可自行輸入數量或按「最大」，每顆靈石獲得 2 點貢獻。</p>
     <p><strong>境界與壽元：</strong>到達各大境界十層即為圓滿，可直接準備突破，不必再累積修為或使用修為丹。成功突破凡人至練氣增加 10 年壽元，練氣至築基增加 100 年，築基至金丹增加 200 年，之後每個大境界依次多增加 100 年；突破失敗不增加壽元。</p>
@@ -1100,8 +1102,7 @@ function getExploreMetadata(action) {
   return parts[0]==='探險' ? {dungeon:getExploreDungeon(parts[1]), strategy:EXPLORE_STRATEGIES[parts[2]]||EXPLORE_STRATEGIES.balanced} : null;
 }
 function getExploreEquipmentBonus() {
-  const equipped=Object.values(player.equipment||{}).filter(Boolean);
-  return Math.min(15,equipped.reduce((total,name)=>total+Math.max(1,ITEM_GRADES.indexOf(getItemGrade(name))+1)*2,0));
+  return Math.min(15,Object.values(player.equipment||{}).filter(Boolean).reduce((total,name)=>total+((getEquipmentStats(name)||{stats:{explore:0}}).stats.explore||0),0));
 }
 function getExploreCombatStats(dungeon,strategy) {
   const playerElement=getMainElement(player.cultivation.elements);
@@ -1284,6 +1285,7 @@ function updateUI() {
   document.getElementById('equip_weapon').innerText = player.equipment.weapon || '無';
   document.getElementById('equip_armor').innerText = player.equipment.armor || '無';
   document.getElementById('equip_accessory').innerText = player.equipment.accessory || '無';
+  renderEquipmentDetail();
   // 資源顯示
   const resourceNames = { stone:'礦石', wood:'木材', herb:'靈草', meat:'獸肉', elixir:'丹藥', gear:'裝備' };
   for (const res in player.resources) {
@@ -1682,6 +1684,7 @@ function setBagUseMax(name, input) {
 
 function getItemDescription(name) {
   const baseName=getItemBaseName(name); const shopItem=SHOP_CATALOG.find(item=>getItemBaseName(item.name)===baseName);
+  const equipmentDetail=formatEquipmentStats(name); if(equipmentDetail)return equipmentDetail + (getItemElements(name) ? `；靈性屬性：${formatElements(getItemElements(name))}。` : '。');
   if (shopItem) return shopItem.description + (getItemElements(name) ? ` 靈性屬性：${formatElements(getItemElements(name))}。` : '');
   if (BREAKTHROUGH_PILL_NAMES.includes(baseName)) return '用於對應大境界突破；靈根越高，所需數量越少，並須面對天道雷劫。';
   if (baseName.includes('丹藥') || baseName.includes('聚氣丹') || baseName.includes('練氣丹')) return '每個可增加修為值 50。';
@@ -1698,6 +1701,45 @@ function getItemCategory(name) {
   if(base.includes('功法'))return '功法'; if(base.includes('陣'))return '陣法';
   if(base.includes('靈器'))return '靈器'; if(base.includes('武器')||base.includes('劍'))return '兵器'; if(base.includes('裝備')||base.includes('法衣'))return '裝備';
   return '其他';
+}
+function getEquipmentBaseName(name) { return getItemBaseName(name).replace(/\s*\+\d+$/, ''); }
+function getEquipmentLevel(name) { const match=String(name).match(/\s*\+(\d+)$/); return match ? Math.min(10,Number(match[1])) : 0; }
+function getEquipmentSlot(name) {
+  const category=getItemCategory(name),base=getEquipmentBaseName(name);
+  if(category==='兵器'||/劍|刀|槍|弓/.test(base))return 'weapon';
+  if(category==='裝備'||/法衣|盔|甲/.test(base))return 'armor';
+  if(category==='靈器'||/飾品|戒|佩/.test(base))return 'accessory';
+  return null;
+}
+function getEquipmentStats(name) {
+  const slot=getEquipmentSlot(name);if(!slot)return null;
+  const grade=Math.max(1,ITEM_GRADES.indexOf(getItemGrade(name))+1),level=getEquipmentLevel(name),multiplier=grade+level*.4;
+  const stats={attack:0,defense:0,speed:0,luck:0,maxHp:0,maxMp:0,explore:0};
+  if(slot==='weapon'){stats.attack=Math.floor(5*multiplier);stats.explore=Math.min(8,grade+Math.floor(level/2));}
+  if(slot==='armor'){stats.defense=Math.floor(4*multiplier);stats.maxHp=Math.floor(12*multiplier);stats.explore=Math.min(6,Math.floor(grade/2)+Math.floor(level/3));}
+  if(slot==='accessory'){stats.speed=Math.floor(2*multiplier);stats.luck=Math.floor(2*multiplier);stats.maxMp=Math.floor(10*multiplier);stats.explore=Math.min(7,Math.floor(grade/2)+Math.floor(level/2));}
+  return {slot,grade,level,stats};
+}
+function formatEquipmentStats(name) { const data=getEquipmentStats(name);if(!data)return '';const parts=Object.entries(data.stats).filter(([,value])=>value).map(([key,value])=>({attack:'攻擊',defense:'防禦',speed:'速度',luck:'運氣',maxHp:'氣血上限',maxMp:'真氣上限',explore:'探險成功率'}[key]+` +${value}${key==='explore'?'%':''}`));return `${data.slot==='weapon'?'武器':data.slot==='armor'?'盔甲':'飾品／靈器'}｜強化 +${data.level}｜${parts.join('、')}`; }
+function equipItem(name) {
+  const slot=getEquipmentSlot(name);if(!slot||!player.bag.items[name])return;
+  const previous=player.equipment[slot]; player.bag.items[name]--;if(player.bag.items[name]<=0)delete player.bag.items[name];
+  player.equipment[slot]=name;if(previous)addItemToBag(previous,1);
+  save();updateUI();alert(`已裝備${name}${previous?`，${previous}已放回背包。`:''}`);
+}
+function enhanceEquipment(slot) {
+  const name=player.equipment[slot],data=getEquipmentStats(name);if(!name||!data)return;
+  if(data.level>=10){alert('此裝備已達強化上限 +10。');return;}
+  const next=data.level+1,stoneCost=data.grade*next,spiritCost=data.grade*next*10;
+  if((player.resources.stone||0)<stoneCost||player.spiritStones<spiritCost){alert(`強化需要礦石 ${stoneCost}、靈石 ${spiritCost}。`);return;}
+  player.resources.stone-=stoneCost;player.spiritStones-=spiritCost;
+  const upgraded=`${String(name).replace(/\s*\+\d+$/, '')} +${next}`;player.equipment[slot]=upgraded;
+  save();updateUI();alert(`${getEquipmentBaseName(name)}強化成功，現為 +${next}。`);
+}
+function renderEquipmentDetail() {
+  const detail=document.getElementById('equipmentDetail');if(!detail)return;
+  const labels={weapon:'武器',armor:'盔甲',accessory:'飾品／靈器'};
+  detail.innerHTML=Object.entries(labels).map(([slot,label])=>{const name=player.equipment[slot],data=getEquipmentStats(name);return name?`<div><strong>${label}</strong>：${formatEquipmentStats(name)} <button onclick="enhanceEquipment('${slot}')">強化</button></div>`:`<div><strong>${label}</strong>：未裝備</div>`;}).join('');
 }
 
 function deleteBagItem(name) {
@@ -1741,7 +1783,8 @@ function updateBagUI() {
       const deleteButton = document.createElement('button');
       deleteButton.textContent = '刪除';
       deleteButton.onclick = () => deleteBagItem(name);
-      li.append(title, description, quantity, maxButton, useButton, deleteButton);
+      const slot=getEquipmentSlot(name);
+      if(slot){const equipButton=document.createElement('button');equipButton.textContent='裝備';equipButton.onclick=()=>equipItem(name);li.append(title,description,equipButton,deleteButton);} else li.append(title, description, quantity, maxButton, useButton, deleteButton);
       listEl.appendChild(li);
     });
   }
@@ -1798,9 +1841,10 @@ function recalcPassiveStats() {
   const baseLuck = 5;
   const baseStamina = 100;
   // 主動屬性加成
-  player.stats.maxHp = baseHp + player.stats.constitution * 10 + (Number(player.breakthroughHpBonus) || 0);
+  const equipmentStats=Object.values(player.equipment||{}).filter(Boolean).reduce((all,name)=>{const s=(getEquipmentStats(name)||{stats:{}}).stats;Object.keys(all).forEach(key=>all[key]+=(s[key]||0));return all;},{attack:0,defense:0,speed:0,luck:0,maxHp:0,maxMp:0});
+  player.stats.maxHp = baseHp + player.stats.constitution * 10 + (Number(player.breakthroughHpBonus) || 0) + equipmentStats.maxHp;
   player.stats.hp = Math.min(player.stats.hp, player.stats.maxHp);
-  player.stats.maxMp = baseMp + player.stats.spirit * 10 + (Number(player.breakthroughMpBonus) || 0);
+  player.stats.maxMp = baseMp + player.stats.spirit * 10 + (Number(player.breakthroughMpBonus) || 0) + equipmentStats.maxMp;
   player.stats.mp = Math.min(player.stats.mp, player.stats.maxMp);
   // 計算體力值：基礎 + 體力屬性影響
   player.stats.maxStamina = baseStamina + player.stats.constitution * 10;
@@ -1810,10 +1854,10 @@ function recalcPassiveStats() {
   } else {
     player.stats.stamina = Math.min(player.stats.stamina, player.stats.maxStamina);
   }
-  player.stats.attack = baseAttack + player.stats.strength * 2;
-  player.stats.defense = baseDefense + player.stats.constitution * 2;
-  player.stats.speed = baseSpeed + player.stats.dexterity;
-  player.stats.luck = baseLuck + player.stats.charisma;
+  player.stats.attack = baseAttack + player.stats.strength * 2 + equipmentStats.attack;
+  player.stats.defense = baseDefense + player.stats.constitution * 2 + equipmentStats.defense;
+  player.stats.speed = baseSpeed + player.stats.dexterity + equipmentStats.speed;
+  player.stats.luck = baseLuck + player.stats.charisma + equipmentStats.luck;
 }
 
 // 更新角色創建面板的屬性顯示
