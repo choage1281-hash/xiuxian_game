@@ -305,7 +305,7 @@
     <p><strong>分類與宗門上貢：</strong>商店與背包可依材料、丹藥、符箓、靈器、兵器、裝備、功法、陣法及丹藥配方篩選；商店提供各境界突破丹與對應配方。宗門上貢靈石可自行輸入數量或按「最大」，每顆靈石獲得 2 點貢獻。</p>
     <p><strong>境界與壽元：</strong>到達各大境界十層即為圓滿，可直接準備突破，不必再累積修為或使用修為丹。成功突破凡人至練氣增加 10 年壽元，練氣至築基增加 100 年，築基至金丹增加 200 年，之後每個大境界依次多增加 100 年；突破失敗不增加壽元。</p>
     <p><strong>靈性屬性：</strong>玩家、靈根、功法、靈器、符箓、陣法及未來的靈獸可具有金、木、水、火、土、雷、冰、風、毒、空間、時間、光、暗、天、混沌等屬性。五行採金生水、水生木、木生火、火生土、土生金；金克木、木克土、土克水、水克火、火克金。未來秘境戰鬥中，同屬性共鳴、相生搭配與相剋攻擊會提供加成；遭到克制則會受到減益。特殊屬性各有獨立效果，例如雷對雷劫有利、冰偏向控制、空間偏向閃避與儲物、時間影響冷卻與秘境時間、天提供泛用增益、混沌具多屬性相容性。</p>
-    <p><strong>秘境探險：</strong>第一版採放置／倒數戰鬥。由主選單進入「探險」，選擇符合境界的秘境與保守、均衡或冒險策略；探險會占用一個進行中欄位並消耗體力，倒數完成後結算勝負、氣血／真氣損耗與獎勵。保守策略提高成功率、獎勵較少；冒險策略掉落較多但風險較高。五行屬性與靈根會影響秘境勝率；未來會擴充回合制、即時戰鬥、卡牌、事件與爬塔等模式。</p>
+    <p><strong>秘境探險：</strong>採放置／倒數戰鬥。由主選單進入「探險」，選擇符合境界的秘境、普通／困難／地獄難度與保守、均衡或冒險策略；探險會占用一個進行中欄位並消耗體力，倒數完成後結算勝負、氣血／真氣損耗與獎勵。困難與地獄模式有更低勝率、更高損耗與體力消耗，但獎勵更多。保守策略提高成功率、獎勵較少；冒險策略掉落較多但風險較高。五行屬性、裝備與角色數值會影響秘境勝率；未來會擴充回合制、即時戰鬥、卡牌、事件與爬塔等模式。</p>
     <p><strong>突破丹品階：</strong>突破前須選擇一種品階，所有所需丹藥必須屬於同一品階，不可混用；未標示品階的舊丹藥視為入品。成功突破時，除原有 5 點可支配點數外，依入品至天品的順序，分別額外獲得 1 至 10 點可支配點數，及 10 至 100 點氣血上限與真氣上限（每升一品各增加 10 點）。加成永久累積；突破失敗仍消耗選定的丹藥，但不獲得加成。品階不影響雷劫成功率。</p>
     <p><strong>未來系統：</strong>靈寵與傀儡將用於擂台、決鬥與宗門對戰，並會擁有各自的品階、技能與培養路線。</p>
     <p><strong>煉丹、突破與雷劫：</strong>煉丹等級決定可煉製的最高品階，但已解鎖的低階丹藥仍可繼續煉製；例如煉丹 Lv.10 可煉製築基丹與全部較低階丹藥。每次煉丹都會依煉丹等級計算成功率，失敗會消耗材料。聚氣丹等一般丹藥不需要配方；大境界突破丹則每煉製一枚都要消耗一張對應配方與材料。凡人十層→練氣一層僅需練氣丹，不需渡劫；練氣十層→築基一層起，往後每次大境界突破都需要對應丹藥並渡過天道雷劫。靈根越高，需要的丹藥越少、雷劫成功率越高；雷劫失敗時會消耗丹藥，但不會提升境界。</p>
@@ -1089,22 +1089,33 @@ const ACTION_LABELS = { train:'修練', mine:'採礦', cutWood:'砍柴', farm:'�
 const EXPLORE_DUNGEONS = [
   {id:'mortal',name:'凡塵試煉',minLevel:0,element:'土',stamina:15,time:30,baseRate:88,rewards:{spiritStones:12,stone:2,wood:1},description:'適合凡人與初入修行者，產出基礎材料。'},
   {id:'qi',name:'靈氣洞府',minLevel:11,element:'木',stamina:22,time:50,baseRate:76,rewards:{spiritStones:24,herb:3,stone:1},description:'練氣期可挑戰，常見木屬性妖植與靈草。'},
-  {id:'foundation',name:'築基遺址',minLevel:21,element:'水',stamina:32,time:70,baseRate:66,rewards:{spiritStones:45,herb:4,stone:3},description:'築基期遺址，危險更高，獎勵更豐厚。'}
+  {id:'foundation',name:'築基遺址',minLevel:21,element:'水',stamina:32,time:70,baseRate:66,rewards:{spiritStones:45,herb:4,stone:3},description:'築基期遺址，危險更高，獎勵更豐厚。'},
+  {id:'core',name:'結丹古墓',minLevel:31,element:'金',stamina:45,time:95,baseRate:58,rewards:{spiritStones:75,herb:6,stone:5,meat:2},description:'結丹真人留下的古墓，守墓傀儡與陰煞之物橫行。'},
+  {id:'nascent',name:'元嬰戰場',minLevel:41,element:'火',stamina:62,time:130,baseRate:51,rewards:{spiritStones:120,herb:9,stone:8,meat:4},description:'上古修士戰場，火煞與殘魂會大量消耗氣血真氣。'},
+  {id:'deity',name:'化神天宮',minLevel:51,element:'雷',stamina:85,time:170,baseRate:45,rewards:{spiritStones:190,herb:13,stone:12,meat:7},description:'化神傳承之地，雷屬性壓力極強。'},
+  {id:'void',name:'煉虛裂界',minLevel:61,element:'空間',stamina:115,time:220,baseRate:39,rewards:{spiritStones:300,herb:18,stone:18,meat:10},description:'空間裂縫中的未知世界，需極高底蘊才能生還。'},
+  {id:'immortal',name:'真仙遺天',minLevel:101,element:'天',stamina:180,time:300,baseRate:32,rewards:{spiritStones:600,herb:30,stone:30,meat:18},description:'真仙級遺跡，只有高境界修士可踏足。'}
 ];
 const EXPLORE_STRATEGIES = {
   cautious:{name:'保守探索',rate:12,reward:0.75,damage:0.55},
   balanced:{name:'均衡探索',rate:0,reward:1,damage:1},
   daring:{name:'冒險探索',rate:-14,reward:1.45,damage:1.45}
 };
+const EXPLORE_DIFFICULTIES = {
+  normal:{id:'normal',name:'普通',rate:0,reward:1,damage:1,stamina:1,time:1},
+  hard:{id:'hard',name:'困難',rate:-12,reward:1.5,damage:1.35,stamina:1.25,time:1.2},
+  hell:{id:'hell',name:'地獄',rate:-25,reward:2.2,damage:1.8,stamina:1.55,time:1.45}
+};
 function getExploreDungeon(id) { return EXPLORE_DUNGEONS.find(dungeon=>dungeon.id===id); }
+function getExploreDifficulty(id) { return EXPLORE_DIFFICULTIES[id] || EXPLORE_DIFFICULTIES.normal; }
 function getExploreMetadata(action) {
   const parts=String(action.name||'').split('|');
-  return parts[0]==='探險' ? {dungeon:getExploreDungeon(parts[1]), strategy:EXPLORE_STRATEGIES[parts[2]]||EXPLORE_STRATEGIES.balanced} : null;
+  return parts[0]==='探險' ? {dungeon:getExploreDungeon(parts[1]), strategy:EXPLORE_STRATEGIES[parts[2]]||EXPLORE_STRATEGIES.balanced, difficulty:getExploreDifficulty(parts[3])} : null;
 }
 function getExploreEquipmentBonus() {
   return Math.min(15,Object.values(player.equipment||{}).filter(Boolean).reduce((total,name)=>total+((getEquipmentStats(name)||{stats:{explore:0}}).stats.explore||0),0));
 }
-function getExploreCombatStats(dungeon,strategy) {
+function getExploreCombatStats(dungeon,strategy,difficulty=EXPLORE_DIFFICULTIES.normal) {
   const playerElement=getMainElement(player.cultivation.elements);
   const relation=getElementRelation(playerElement,dungeon.element);
   const stats=player.stats;
@@ -1118,34 +1129,35 @@ function getExploreCombatStats(dungeon,strategy) {
   const equipmentBonus=getExploreEquipmentBonus();
   const statusBonus=hpPercent>=80&&mpPercent>=80?5:(hpPercent<50||mpPercent<50?-10:0);
   const specialBonus=playerElement==='天'?6:playerElement==='混沌'?4:0;
-  const rate=Math.max(20,Math.min(95,Math.floor(dungeon.baseRate+strategy.rate+realmBonus+attackBonus+defenseBonus+speedBonus+luckBonus+mindBonus+equipmentBonus+(relation.multiplier-1)*100+specialBonus+statusBonus)));
-  const estimatedDamage=Math.max(2,Math.floor((14+dungeon.minLevel/2)*strategy.damage-(stats.defense+stats.constitution)/12));
-  return {rate,relation,hpPercent,mpPercent,estimatedDamage,breakdown:[['秘境基礎',dungeon.baseRate],['境界',realmBonus],['攻擊＋力量',attackBonus],['防禦＋體力',defenseBonus],['速度＋敏捷',speedBonus],['運氣＋魅力',luckBonus],['智力＋精神',mindBonus],['裝備',equipmentBonus],['屬性關係',(relation.multiplier-1)*100],['狀態',statusBonus],['策略',strategy.rate],['特殊靈性',specialBonus]]};
+  const rate=Math.max(20,Math.min(95,Math.floor(dungeon.baseRate+strategy.rate+difficulty.rate+realmBonus+attackBonus+defenseBonus+speedBonus+luckBonus+mindBonus+equipmentBonus+(relation.multiplier-1)*100+specialBonus+statusBonus)));
+  const estimatedDamage=Math.max(2,Math.floor((14+dungeon.minLevel/2)*strategy.damage*difficulty.damage-(stats.defense+stats.constitution)/12));
+  return {rate,relation,hpPercent,mpPercent,estimatedDamage,breakdown:[['秘境基礎',dungeon.baseRate],['境界',realmBonus],['攻擊＋力量',attackBonus],['防禦＋體力',defenseBonus],['速度＋敏捷',speedBonus],['運氣＋魅力',luckBonus],['智力＋精神',mindBonus],['裝備',equipmentBonus],['屬性關係',(relation.multiplier-1)*100],['狀態',statusBonus],['策略',strategy.rate],['難度',difficulty.rate],['特殊靈性',specialBonus]]};
 }
-function getExploreSuccessRate(dungeon,strategy) { return getExploreCombatStats(dungeon,strategy).rate; }
+function getExploreSuccessRate(dungeon,strategy,difficulty) { return getExploreCombatStats(dungeon,strategy,difficulty).rate; }
 function canExplore() { return player.stats.hp/player.stats.maxHp>=0.3 && player.stats.mp/player.stats.maxMp>=0.2; }
 function renderExplorePage() {
   const list=document.getElementById('exploreList'); if(!list)return;
   list.innerHTML=EXPLORE_DUNGEONS.map(dungeon=>{
     const available=player.level>=dungeon.minLevel, playerElement=getMainElement(player.cultivation.elements), relation=getElementRelation(playerElement,dungeon.element);
-    const balanced=getExploreCombatStats(dungeon,EXPLORE_STRATEGIES.balanced),statusReady=canExplore();
-    const strategyButtons=Object.entries(EXPLORE_STRATEGIES).map(([key,strategy])=>`<button ${available&&statusReady?'':'disabled'} onclick="startExploration('${dungeon.id}','${key}')">${strategy.name}<br><small>勝率 ${getExploreSuccessRate(dungeon,strategy)}%</small></button>`).join(' ');
+    const difficulty=getExploreDifficulty((document.getElementById('exploreDifficulty_'+dungeon.id)||{}).value),balanced=getExploreCombatStats(dungeon,EXPLORE_STRATEGIES.balanced,difficulty),statusReady=canExplore();
+    const stamina=Math.ceil(dungeon.stamina*difficulty.stamina),time=Math.ceil(dungeon.time*difficulty.time);
+    const strategyButtons=Object.entries(EXPLORE_STRATEGIES).map(([key,strategy])=>`<button ${available&&statusReady?'':'disabled'} onclick="startExploration('${dungeon.id}','${key}')">${strategy.name}<br><small>勝率 ${getExploreSuccessRate(dungeon,strategy,difficulty)}%</small></button>`).join(' ');
     const breakdown=balanced.breakdown.filter(([,value])=>value).map(([label,value])=>`${label} ${value>0?'+':''}${value}%`).join('｜')||'無額外修正';
-    return `<div class="shop-item"><h4>${dungeon.name}</h4><p class="item-description">敵方主屬性：${dungeon.element}｜${dungeon.description}<br>你的${playerElement}屬性對其為「${relation.label}」；每次消耗體力 ${dungeon.stamina}，時間 ${dungeon.time} 秒。<br><strong>均衡探索預估勝率：${balanced.rate}%</strong><br><small>${breakdown}</small><br><small>目前氣血 ${balanced.hpPercent}%｜真氣 ${balanced.mpPercent}%｜預估單次損耗：氣血 ${Math.floor(balanced.estimatedDamage/2)}～${balanced.estimatedDamage}、真氣 6～12</small></p><small>${!available?`需達到 ${getStage(dungeon.minLevel)} 才能進入。`:!statusReady?'氣血需至少 30%，真氣需至少 20% 才可探險。':'輸入批量次數後選擇策略。'}</small><div class="shop-controls"><input id="exploreQty_${dungeon.id}" type="number" min="1" value="1" aria-label="${dungeon.name}探險次數"><button ${available&&statusReady?'':'disabled'} onclick="fillMaxExplore('${dungeon.id}')">最大</button>${strategyButtons}</div></div>`;
+    return `<div class="shop-item"><h4>${dungeon.name}</h4><p class="item-description">敵方主屬性：${dungeon.element}｜${dungeon.description}<br>你的${playerElement}屬性對其為「${relation.label}」；本難度每次消耗體力 ${stamina}，時間 ${time} 秒。<br><strong>均衡探索預估勝率：${balanced.rate}%</strong><br><small>${breakdown}</small><br><small>目前氣血 ${balanced.hpPercent}%｜真氣 ${balanced.mpPercent}%｜預估單次損耗：氣血 ${Math.floor(balanced.estimatedDamage/2)}～${balanced.estimatedDamage}、真氣 6～12</small></p><small>${!available?`需達到 ${getStage(dungeon.minLevel)} 才能進入。`:!statusReady?'氣血需至少 30%，真氣需至少 20% 才可探險。':'選擇難度、輸入批量次數後選擇策略。'}</small><div class="shop-controls"><label>難度：<select id="exploreDifficulty_${dungeon.id}" onchange="renderExplorePage()">${Object.entries(EXPLORE_DIFFICULTIES).map(([key,item])=>`<option value="${key}"${key===difficulty.id?' selected':''}>${item.name}</option>`).join('')}</select></label><input id="exploreQty_${dungeon.id}" type="number" min="1" value="1" aria-label="${dungeon.name}探險次數"><button ${available&&statusReady?'':'disabled'} onclick="fillMaxExplore('${dungeon.id}')">最大</button>${strategyButtons}</div></div>`;
   }).join('');
 }
-function fillMaxExplore(dungeonId) { const dungeon=getExploreDungeon(dungeonId),input=document.getElementById('exploreQty_'+dungeonId);if(dungeon&&input)input.value=Math.max(1,Math.floor(player.stats.stamina/dungeon.stamina)); }
+function fillMaxExplore(dungeonId) { const dungeon=getExploreDungeon(dungeonId),input=document.getElementById('exploreQty_'+dungeonId),difficulty=getExploreDifficulty((document.getElementById('exploreDifficulty_'+dungeonId)||{}).value);if(dungeon&&input)input.value=Math.max(1,Math.floor(player.stats.stamina/Math.ceil(dungeon.stamina*difficulty.stamina))); }
 function startExploration(dungeonId,strategyId) {
   const dungeon=getExploreDungeon(dungeonId),strategy=EXPLORE_STRATEGIES[strategyId];
   if(!dungeon||!strategy||player.level<dungeon.minLevel)return;
   if(!canExplore()){alert('目前氣血需至少 30%、真氣需至少 20% 才可進入秘境，請先休息或使用恢復丹藥。');return;}
-  const input=document.getElementById('exploreQty_'+dungeonId),count=Math.floor(Number(input&&input.value)||1);
+  const input=document.getElementById('exploreQty_'+dungeonId),difficulty=getExploreDifficulty((document.getElementById('exploreDifficulty_'+dungeonId)||{}).value),count=Math.floor(Number(input&&input.value)||1),stamina=Math.ceil(dungeon.stamina*difficulty.stamina),time=Math.ceil(dungeon.time*difficulty.time);
   if(!Number.isSafeInteger(count)||count<1){alert('請輸入至少 1 次探險。');return;}
   if(activeActions.length>=getActionSlotCount()){alert(`進行中欄位已滿（目前可同時進行 ${getActionSlotCount()} 項）`);return;}
-  if(player.stats.stamina<dungeon.stamina*count){alert(`體力不足；${dungeon.name}目前最多可批量探險 ${Math.floor(player.stats.stamina/dungeon.stamina)} 次。`);return;}
-  player.stats.stamina-=dungeon.stamina*count;
-  const now=Date.now(); activeActions.push({type:'explore',count,startTime:now,endTime:now+dungeon.time*count*1000,name:`探險|${dungeon.id}|${strategyId}`});
-  save();updateUI();alert(`已進入${dungeon.name} ${count} 次，採用${strategy.name}。`);
+  if(player.stats.stamina<stamina*count){alert(`體力不足；${dungeon.name}目前最多可批量探險 ${Math.floor(player.stats.stamina/stamina)} 次。`);return;}
+  player.stats.stamina-=stamina*count;
+  const now=Date.now(); activeActions.push({type:'explore',count,startTime:now,endTime:now+time*count*1000,name:`探險|${dungeon.id}|${strategyId}|${(document.getElementById('exploreDifficulty_'+dungeonId)||{}).value||'normal'}`});
+  save();updateUI();alert(`已進入${dungeon.name} ${count} 次，採用${difficulty.name}・${strategy.name}。`);
 }
 const SKILL_CARDS = [
   ['train','修練','獲得修為值'], ['mine','採礦','獲得礦石'], ['cutWood','砍柴','獲得木材'],
@@ -1218,7 +1230,7 @@ function renderActionSlots() {
     const remaining = Math.max(0, action.endTime - Date.now());
     const elapsed = Math.max(0, Date.now() - action.startTime);
     const percent = Math.min(100, Math.floor(elapsed / (action.endTime - action.startTime) * 100));
-    const explore=getExploreMetadata(action); const label=explore ? `${explore.dungeon ? explore.dungeon.name : '秘境'}・${explore.strategy.name}` : ACTION_LABELS[action.type];
+    const explore=getExploreMetadata(action); const label=explore ? `${explore.dungeon ? explore.dungeon.name : '秘境'}・${explore.difficulty.name}・${explore.strategy.name}` : ACTION_LABELS[action.type];
     html += `<div class="action-slot busy"><strong>欄位 ${i + 1} · ${label}</strong><br>${explore?'探險結算中':`批量 ${action.count} 次`} · 剩餘 ${Math.ceil(remaining / 1000)} 秒<div class="action-progress"><span style="width:${percent}%"></span></div></div>`;
   }
   slots.innerHTML = html;
@@ -1362,21 +1374,21 @@ function finishAction(action) {
   save(); updateUI();
 }
 function finishExploration(action) {
-  const meta=getExploreMetadata(action),dungeon=meta&&meta.dungeon,strategy=meta&&meta.strategy;
-  if(!dungeon||!strategy){activeActions=activeActions.filter(item=>item!==action);save();updateUI();return;}
-  const combat=getExploreCombatStats(dungeon,strategy),rate=combat.rate,count=Math.max(1,Number(action.count)||1);
+  const meta=getExploreMetadata(action),dungeon=meta&&meta.dungeon,strategy=meta&&meta.strategy,difficulty=meta&&meta.difficulty;
+  if(!dungeon||!strategy||!difficulty){activeActions=activeActions.filter(item=>item!==action);save();updateUI();return;}
+  const combat=getExploreCombatStats(dungeon,strategy,difficulty),rate=combat.rate,count=Math.max(1,Number(action.count)||1);
   const playerElement=getMainElement(player.cultivation.elements),relation=getElementRelation(playerElement,dungeon.element);
   const baseDamage=combat.estimatedDamage;
   let successCount=0,hpLoss=0,mpLoss=0; const rewardsTotal={};
   for(let i=0;i<count;i++){
     const success=Math.random()*100<rate,damage=success?Math.floor(baseDamage/2):baseDamage;
     hpLoss+=damage;mpLoss+=success?6:12;
-    if(success){successCount++;Object.entries(dungeon.rewards).forEach(([key,value])=>rewardsTotal[key]=(rewardsTotal[key]||0)+Math.max(1,Math.floor(value*strategy.reward)));}
+    if(success){successCount++;Object.entries(dungeon.rewards).forEach(([key,value])=>rewardsTotal[key]=(rewardsTotal[key]||0)+Math.max(1,Math.floor(value*strategy.reward*difficulty.reward)));}
   }
   player.stats.hp=Math.max(1,player.stats.hp-hpLoss); player.stats.mp=Math.max(0,player.stats.mp-mpLoss);
   Object.entries(rewardsTotal).forEach(([key,value])=>{if(key==='spiritStones')player.spiritStones+=value;else player.resources[key]=(player.resources[key]||0)+value;});
   const text=Object.entries(rewardsTotal).map(([key,value])=>`${key==='spiritStones'?'靈石':({stone:'礦石',wood:'木材',herb:'靈草'}[key]||key)} ×${value}`).join('、');
-  const message=`${dungeon.name}批量探險 ${count} 次結算：成功 ${successCount} 次、失敗 ${count-successCount} 次。${relation.label}，單次勝率 ${rate}%。${text?`獲得 ${text}；`:''}氣血 -${hpLoss}、真氣 -${mpLoss}。`;
+  const message=`${dungeon.name}・${difficulty.name}批量探險 ${count} 次結算：成功 ${successCount} 次、失敗 ${count-successCount} 次。${relation.label}，單次勝率 ${rate}%。${text?`獲得 ${text}；`:''}氣血 -${hpLoss}、真氣 -${mpLoss}。`;
   activeActions=activeActions.filter(item=>item!==action);save();updateUI();alert(message);
 }
 
