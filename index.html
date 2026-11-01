@@ -99,8 +99,9 @@
   .shop-controls { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:9px; }
   .shop-controls input { width:62px; padding:7px 4px; border:1px solid #b8c9b8; border-radius:6px; text-align:center; }
   .shop-controls button { display:inline-block !important; width:auto !important; margin:0 !important; padding:8px 10px !important; }
-  #backToTop,#backToBottom { position:fixed; right:22px; z-index:20; border:0; border-radius:999px; padding:11px 14px; background:#314c78; color:#fff; box-shadow:0 3px 10px rgba(0,0,0,.22); cursor:pointer; }
+  #backToTop,#backToBottom,#backToMenu { position:fixed; right:22px; z-index:20; border:0; border-radius:999px; padding:11px 14px; background:#314c78; color:#fff; box-shadow:0 3px 10px rgba(0,0,0,.22); cursor:pointer; }
   #backToTop { bottom:22px; display:none; } #backToBottom { bottom:70px; }
+  #backToMenu { bottom:118px; background:#785c31; }
   @media (max-width:600px) { .exp-wrap,.stat-wrap { width:135px; } .panel { padding:9px; } }
 </style>
 </head>
@@ -152,6 +153,9 @@
     <strong>裝備-武器：</strong><span id="equip_weapon">無</span><br>
     <strong>裝備-盔甲：</strong><span id="equip_armor">無</span><br>
     <strong>裝備-飾品／靈器：</strong><span id="equip_accessory">無</span>
+    <br><strong>裝備-鞋子：</strong><span id="equip_shoes">無</span><br>
+    <strong>裝備-護盾：</strong><span id="equip_shield">無</span><br>
+    <strong>裝備-護腕：</strong><span id="equip_bracers">無</span>
     <div id="equipmentDetail" style="margin-top:8px; font-size:.9em;"></div>
     <div id="breakthroughPanel" style="display:none; margin-top:12px; padding:10px; border:1px solid #e6c46a; border-radius:8px; background:#fff9e7;"></div>
     <!-- V1-12：常駐於玩家資訊底部，方便隨時查看任務進度 -->
@@ -285,14 +289,8 @@
 
   <div id="companionsPage" class="panel" style="display:none">
     <h3>靈寵與傀儡</h3>
-    <p>探險時可各帶一隻靈寵與一具傀儡；靈寵可餵養成長，傀儡需要消耗靈石出戰並可修理耐久。</p>
+    <p>可依魅力同時派遣多名夥伴。靈獸的升級、餵食忠誠、境界提升彼此獨立；所有操作都在各自的夥伴卡片中完成。</p>
     <div id="companionsContent"></div>
-    <button onclick="advanceCompanion('pet')">靈寵提升大境界</button>
-    <button onclick="advanceCompanion('puppet')">傀儡提升大境界</button>
-    <button onclick="advanceCompanion('mount')">飛行法器提升大境界</button>
-    <button onclick="upgradeActiveMount()">升級目前飛行法器</button>
-    <button onclick="repairActiveMount()">修理目前飛行法器</button>
-    <button onclick="showPage('mainMenu')">返回主選單</button>
   </div>
 
 
@@ -479,7 +477,7 @@ const SHOP_CATALOG = [
   {id:'staminaSmall',name:'入品·小體力丹',category:'丹藥',price:10,description:'恢復體力 10 點。'}, {id:'staminaMedium',name:'下品·中體力丹',category:'丹藥',price:25,description:'恢復體力 30 點。'}, {id:'staminaLarge',name:'中品·大體力丹',category:'丹藥',price:60,description:'恢復體力 80 點。'},
   {id:'hp',name:'下品·補血丹',category:'丹藥',price:30,description:'恢復氣血 50 點。'}, {id:'mp',name:'下品·回靈丹',category:'丹藥',price:30,description:'恢復真氣 50 點。'},
   {id:'bag',name:'入品·儲物袋',category:'儲物',price:120,description:'使用後永久增加背包 5 格。'}, {id:'talisman',name:'入品·幸運符',category:'符箓',price:50,description:'使用後增加運氣 1 點。'},
-  {id:'weapon',name:'下品·青鋒劍',category:'兵器',price:180,description:'可交易的下品兵器。'}, {id:'artifact',name:'中品·護身靈器',category:'靈器',price:300,description:'可交易的中品靈器。'}, {id:'armor',name:'下品·靈絲法衣',category:'裝備',price:160,description:'可交易的下品裝備。'},
+  {id:'weapon',name:'下品·青鋒劍',category:'兵器',price:180,description:'可交易的下品兵器。'}, {id:'artifact',name:'中品·護身靈器',category:'靈器',price:300,description:'可交易的中品靈器。'}, {id:'armor',name:'下品·靈絲法衣',category:'裝備',price:160,description:'可交易的下品裝備。'}, {id:'shoes',name:'下品·踏風靴',category:'裝備',price:140,description:'裝備於鞋子欄位，提升速度與探險能力。'}, {id:'shield',name:'下品·玄鐵護盾',category:'裝備',price:180,description:'裝備於護盾欄位，提升防禦與氣血。'}, {id:'bracers',name:'下品·青銅護腕',category:'裝備',price:130,description:'裝備於護腕欄位，提升攻擊與防禦。'},
   {id:'manual',name:'中品·吐納功法',category:'功法',price:260,description:'日後可裝備的功法。'}, {id:'array',name:'下品·聚靈陣盤',category:'陣法',price:220,description:'日後可佈置的陣法。'},
   {id:'qiRecipe',name:'入品·練氣丹配方',category:'丹藥配方',price:100,description:'煉製練氣丹的消耗性配方。'}, {id:'foundationRecipe',name:'下品·築基丹配方',category:'丹藥配方',price:500,description:'煉製築基丹的消耗性配方。'}
   ,...buildCompleteGradeCatalog()
@@ -727,7 +725,10 @@ let player = {
   equipment: {
     weapon: null,
     armor: null,
-    accessory: null
+    accessory: null,
+    shoes: null,
+    shield: null,
+    bracers: null
   },
   companions: { pets: [], puppets: [], mounts: [], activePetId: null, activePuppetId: null, activePetIds: [], activePuppetIds: [], activeMountId: null, activeMountIds: [] },
   bag: {
@@ -946,8 +947,9 @@ function load() {
         player.cultivation.contribution = (player.cultivation.contribution !== undefined) ? player.cultivation.contribution : 0;
       }
       if (!player.equipment) {
-        player.equipment = {weapon:null, armor:null, accessory:null};
+        player.equipment = {weapon:null, armor:null, accessory:null, shoes:null, shield:null, bracers:null};
       }
+      ['weapon','armor','accessory','shoes','shield','bracers'].forEach(slot=>{ if (player.equipment[slot] === undefined) player.equipment[slot]=null; });
       if (!player.companions) player.companions = {pets:[],puppets:[],mounts:[],activePetId:null,activePuppetId:null,activePetIds:[],activePuppetIds:[],activeMountId:null,activeMountIds:[]};
       player.companions.pets = Array.isArray(player.companions.pets) ? player.companions.pets : [];
       player.companions.puppets = Array.isArray(player.companions.puppets) ? player.companions.puppets : [];
@@ -955,6 +957,7 @@ function load() {
       player.companions.activePetIds = Array.isArray(player.companions.activePetIds) ? player.companions.activePetIds : (player.companions.activePetId?[player.companions.activePetId]:[]);
       player.companions.activePuppetIds = Array.isArray(player.companions.activePuppetIds) ? player.companions.activePuppetIds : (player.companions.activePuppetId?[player.companions.activePuppetId]:[]);
       player.companions.activeMountIds = Array.isArray(player.companions.activeMountIds) ? player.companions.activeMountIds : (player.companions.activeMountId?[player.companions.activeMountId]:[]);
+      player.companions.pets.forEach(pet=>{ pet.realm=Number.isFinite(pet.realm)?pet.realm:0; pet.root=pet.root||Math.max(1,Math.floor((pet.aptitude||70)/20)); pet.comprehension=pet.comprehension||Math.max(1,Math.floor((pet.aptitude||70)/25)); pet.exp=pet.exp||0; pet.loyalty=Number.isFinite(pet.loyalty)?pet.loyalty:60; });
       if (!player.bag) {
         player.bag = {capacity:10, items:{}};
       } else {
@@ -1042,7 +1045,10 @@ function resetGame() {
     equipment: {
       weapon: null,
       armor: null,
-      accessory: null
+    accessory: null,
+    shoes: null,
+    shield: null,
+    bracers: null
     },
     companions: { pets: [], puppets: [], mounts: [], activePetId: null, activePuppetId: null, activePetIds: [], activePuppetIds: [], activeMountId: null, activeMountIds: [] },
     bag: {
@@ -1113,7 +1119,9 @@ function getGrade(level) {
 
 const ACTION_LABELS = { train:'修練', mine:'採礦', cutWood:'砍柴', farm:'種田', hunt:'狩獵', drawTalisman:'畫符', pill:'煉丹', gear:'煉器', explore:'秘境探險' };
 function companionId(prefix) { return `${prefix}_${Date.now()}_${Math.floor(Math.random()*100000)}`; }
-function getCompanionCharmRequirement(item) { return 1+Math.floor(Math.max(0,(item.level||1)-1)/3)+(item.realm||0)*4+Math.max(0,ITEM_GRADES.indexOf(item.grade||'入品')); }
+function getSectPassiveBonus() { if(!player||!player.joinedSect)return 0;const index=SECT_RANK_EXCHANGE.findIndex(rank=>rank.title===player.cultivation.sectRank);return index<0?(player.isSectMaster?10:0):index+1; }
+function getEffectiveCharisma() { return (player.stats.charisma||1)+getSectPassiveBonus(); }
+function getCompanionCharmRequirement(item) { return 1+Math.floor(Math.max(0,(item.level||1)-1)/3)+(item.realm||0)*4+(item&&item.grade?Math.max(0,ITEM_GRADES.indexOf(item.grade)):0); }
 function getActivePets() { const ids=(player.companions&&player.companions.activePetIds)||[];return (player.companions&&player.companions.pets||[]).filter(pet=>ids.includes(pet.id)); }
 function getActivePuppets() { const ids=(player.companions&&player.companions.activePuppetIds)||[];return (player.companions&&player.companions.puppets||[]).filter(puppet=>ids.includes(puppet.id)); }
 function getActiveMounts() { const ids=(player.companions&&player.companions.activeMountIds)||[];return (player.companions&&player.companions.mounts||[]).filter(mount=>ids.includes(mount.id)); }
@@ -1121,14 +1129,18 @@ function getActiveCompanionCharmCost() { return [...getActivePets(),...getActive
 function getActivePet() { return getActivePets()[0]||null; }
 function getActivePuppet() { return getActivePuppets()[0]||null; }
 function getActiveMount() { return getActiveMounts()[0]||null; }
-function createPet() { return {id:companionId('pet'),name:'赤焰狐',grade:'入品',element:'火',level:1,exp:0,aptitude:70,loyalty:60,attack:5,defense:3,speed:6,luck:4,hp:60,maxHp:60,mp:30,maxMp:30}; }
+function createPet() { return {id:companionId('pet'),name:'赤焰狐',element:'火',level:1,realm:0,exp:0,aptitude:70,root:3,comprehension:2,loyalty:60,attack:5,defense:3,speed:6,luck:4,hp:60,maxHp:60,mp:30,maxMp:30}; }
 function createPuppet() { return {id:companionId('puppet'),name:'木甲傀儡',grade:'入品',element:'木',level:1,durability:100,maxDurability:100,attack:3,defense:8,speed:2,luck:0,energyCost:3,modules:[]}; }
 function createMount() { return {id:companionId('mount'),name:'青雲飛梭',grade:'入品',element:'風',level:1,durability:100,maxDurability:100,speedBonus:5,exploreBonus:3,timeReduction:0.08}; }
 function claimPetEgg() { if(player.companions.pets.length>=10){alert('靈寵欄已滿。');return;} if((player.resources.herb||0)<3||(player.resources.meat||0)<2){alert('孵化靈寵蛋需要靈草 3、獸肉 2。');return;}player.resources.herb-=3;player.resources.meat-=2;const pet=createPet();player.companions.pets.push(pet);if(!player.companions.activePetIds.length){player.companions.activePetIds=[pet.id];player.companions.activePetId=pet.id;}save();updateUI();renderCompanionsPage();alert(`孵化成功，獲得${pet.name}！`);}
 function craftPuppet() { if(player.companions.puppets.length>=10){alert('傀儡欄已滿。');return;}if((player.resources.wood||0)<3||(player.resources.stone||0)<3||player.spiritStones<20){alert('打造傀儡需要木材 3、礦石 3、靈石 20。');return;}player.resources.wood-=3;player.resources.stone-=3;player.spiritStones-=20;const puppet=createPuppet();player.companions.puppets.push(puppet);if(!player.companions.activePuppetIds.length){player.companions.activePuppetIds=[puppet.id];player.companions.activePuppetId=puppet.id;}save();updateUI();renderCompanionsPage();alert(`打造成功，獲得${puppet.name}！`);}
 function craftMount() { if(player.companions.mounts.length>=10){alert('坐騎／飛行法器欄已滿。');return;}if((player.resources.wood||0)<5||(player.resources.stone||0)<5||player.spiritStones<50){alert('打造青雲飛梭需要木材 5、礦石 5、靈石 50。');return;}player.resources.wood-=5;player.resources.stone-=5;player.spiritStones-=50;const mount=createMount();player.companions.mounts.push(mount);if(!player.companions.activeMountIds.length){player.companions.activeMountIds=[mount.id];player.companions.activeMountId=mount.id;}save();updateUI();renderCompanionsPage();alert(`打造成功，獲得${mount.name}！`);}
-function setActiveCompanion(type,id) { const key=type==='pet'?'activePetIds':type==='puppet'?'activePuppetIds':'activeMountIds',ids=player.companions[key]||[],index=ids.indexOf(id);if(index>=0)ids.splice(index,1);else{const list=type==='pet'?player.companions.pets:type==='puppet'?player.companions.puppets:player.companions.mounts,item=list.find(entry=>entry.id===id),need=getCompanionCharmRequirement(item);if(getActiveCompanionCharmCost()+need>(player.stats.charisma||1)){alert(`魅力不足：${item.name}需要魅力 ${need}，目前可用 ${player.stats.charisma||1}／已使用 ${getActiveCompanionCharmCost()}。`);return;}ids.push(id);}player.companions[key]=ids;if(type==='pet')player.companions.activePetId=ids[0]||null;if(type==='puppet')player.companions.activePuppetId=ids[0]||null;if(type==='mount')player.companions.activeMountId=ids[0]||null;save();updateUI();renderCompanionsPage();renderCompanionRequirementNotes(); }
-function feedPet(id) { const pet=(player.companions.pets||[]).find(item=>item.id===id);if(!pet)return;if(pet.level>=10){alert('靈寵已達 Lv.10，請提升大境界。');return;}if((player.resources.meat||0)<1||!player.bag.items['小體力丹']){alert('餵養需要獸肉 1 與小體力丹 1。');return;}player.resources.meat--;player.bag.items['小體力丹']--;if(!player.bag.items['小體力丹'])delete player.bag.items['小體力丹'];pet.exp+=20;while(pet.level<10&&pet.exp>=pet.level*30){pet.exp-=pet.level*30;pet.level++;pet.attack+=2;pet.defense+=1;pet.speed+=1;pet.maxHp+=10;pet.hp=pet.maxHp;pet.maxMp+=5;pet.mp=pet.maxMp;}pet.loyalty=Math.min(100,pet.loyalty+3);save();updateUI();renderCompanionsPage();}
+function setActiveCompanion(type,id) { const key=type==='pet'?'activePetIds':type==='puppet'?'activePuppetIds':'activeMountIds',ids=player.companions[key]||[],index=ids.indexOf(id);if(index>=0)ids.splice(index,1);else{const list=type==='pet'?player.companions.pets:type==='puppet'?player.companions.puppets:player.companions.mounts,item=list.find(entry=>entry.id===id),need=getCompanionCharmRequirement(item);if(!item)return;if(getActiveCompanionCharmCost()+need>getEffectiveCharisma()){alert(`魅力不足：${item.name}需要魅力 ${need}，目前可用 ${getEffectiveCharisma()}／已使用 ${getActiveCompanionCharmCost()}。`);return;}ids.push(id);}player.companions[key]=ids;if(type==='pet')player.companions.activePetId=ids[0]||null;if(type==='puppet')player.companions.activePuppetId=ids[0]||null;if(type==='mount')player.companions.activeMountId=ids[0]||null;save();updateUI();renderCompanionsPage(); }
+function getPetRealmLabel(pet) { return getStage(Math.max(0,(pet.realm||0)*10+1)).replace(/\d+層$/, ''); }
+function getPetExpNeeded(pet) { return Math.max(15,Math.floor((pet.level||1)*30*(1-Math.min(.5,((pet.root||1)-1)*.05+((pet.comprehension||1)-1)*.03)))); }
+function feedPet(id) { const pet=getCompanionById('pet',id);if(!pet)return;if((player.resources.meat||0)<1){alert('餵食需要獸肉 1。');return;}player.resources.meat--;pet.loyalty=Math.min(100,(pet.loyalty||0)+5);save();updateUI();renderCompanionsPage();alert(`${pet.name}的忠誠提升至 ${pet.loyalty}。`);}
+function upgradePet(id) { const pet=getCompanionById('pet',id);if(!pet)return;if(pet.level>=10){alert('靈獸已達本境界 Lv.10，請提升大境界。');return;}const talent=Math.max(.5,1-((pet.root||1)-1)*.06-((pet.comprehension||1)-1)*.04),herb=Math.max(1,Math.ceil(pet.level*talent)),meat=Math.max(1,Math.ceil(pet.level/2*talent));if((player.resources.herb||0)<herb||(player.resources.meat||0)<meat){alert(`靈獸升級需要靈草 ${herb}、獸肉 ${meat}。靈根與悟性越高，升級需求越低。`);return;}player.resources.herb-=herb;player.resources.meat-=meat;pet.exp=(pet.exp||0)+getPetExpNeeded(pet);while(pet.level<10&&pet.exp>=getPetExpNeeded(pet)){pet.exp-=getPetExpNeeded(pet);pet.level++;pet.attack+=2;pet.defense+=1;pet.speed+=1;pet.maxHp+=10;pet.maxMp+=5;}pet.hp=pet.maxHp;pet.mp=pet.maxMp;save();updateUI();renderCompanionsPage();alert(`${pet.name}升至 Lv.${pet.level}。`);}
+function repairPet(id) { const pet=getCompanionById('pet',id);if(!pet)return;const herb=1;if((player.resources.herb||0)<herb){alert('療傷需要靈草 1。');return;}player.resources.herb-=herb;pet.hp=pet.maxHp;pet.mp=pet.maxMp;save();updateUI();renderCompanionsPage();alert(`${pet.name}已恢復至最佳狀態。`);}
 function repairPuppet(id) { const puppet=(player.companions.puppets||[]).find(item=>item.id===id);if(!puppet)return;const missing=puppet.maxDurability-puppet.durability;if(!missing){alert('傀儡耐久已滿。');return;}const wood=Math.ceil(missing/20),stone=Math.ceil(missing/25);if((player.resources.wood||0)<wood||(player.resources.stone||0)<stone){alert(`修理需要木材 ${wood}、礦石 ${stone}。`);return;}player.resources.wood-=wood;player.resources.stone-=stone;puppet.durability=puppet.maxDurability;save();updateUI();renderCompanionsPage();}
 function repairMount(id) { const mount=(player.companions.mounts||[]).find(item=>item.id===id);if(!mount)return;const missing=mount.maxDurability-mount.durability;if(!missing){alert('飛行法器耐久已滿。');return;}const stone=Math.ceil(missing/20),spirit=Math.ceil(missing/10);if((player.resources.stone||0)<stone||player.spiritStones<spirit){alert(`修理需要礦石 ${stone}、靈石 ${spirit}。`);return;}player.resources.stone-=stone;player.spiritStones-=spirit;mount.durability=mount.maxDurability;save();updateUI();renderCompanionsPage();}
 function repairActiveMount() { const mount=getActiveMount();if(!mount){alert('請先選擇一件飛行法器。');return;}repairMount(mount.id); }
@@ -1137,14 +1149,26 @@ function upgradePuppet(id) { const puppet=(player.companions.puppets||[]).find(i
 function upgradeMount(id) { const mount=(player.companions.mounts||[]).find(item=>item.id===id);if(!mount)return;if(mount.level>=10){alert('飛行法器已達 Lv.10，請進行大境界提升。');return;}const next=mount.level+1,wood=next*2,stone=next*3,spirit=next*20;if((player.resources.wood||0)<wood||(player.resources.stone||0)<stone||player.spiritStones<spirit){alert(`升級需要木材 ${wood}、礦石 ${stone}、靈石 ${spirit}。`);return;}player.resources.wood-=wood;player.resources.stone-=stone;player.spiritStones-=spirit;mount.level=next;mount.speedBonus+=1;mount.exploreBonus+=1;mount.timeReduction=Math.min(.35,mount.timeReduction+.01);mount.maxDurability+=12;mount.durability=mount.maxDurability;save();updateUI();renderCompanionsPage();}
 const COMPANION_REALM_NAMES=['凡階','靈階','玄階','地階','天階','仙階','神階','聖階','帝階','道階'];
 function getCompanionById(type,id) { const list=type==='pet'?player.companions.pets:type==='puppet'?player.companions.puppets:player.companions.mounts;return list.find(item=>item.id===id); }
-function getCompanionRealmLabel(item) { return COMPANION_REALM_NAMES[Math.min(COMPANION_REALM_NAMES.length-1,item.realm||0)]; }
-function advanceCompanionItem(type,item) { if(!item){alert('找不到夥伴。');return;}if(item.level<10){alert('需先升至 Lv.10 才能提升大境界。');return;}const realm=item.realm||0,herb=(realm+1)*5,stone=(realm+1)*5,spirit=(realm+1)*100;if((player.resources.herb||0)<herb||(player.resources.stone||0)<stone||player.spiritStones<spirit){alert(`提升大境界需要靈草 ${herb}、礦石 ${stone}、靈石 ${spirit}。`);return;}player.resources.herb-=herb;player.resources.stone-=stone;player.spiritStones-=spirit;item.realm=realm+1;item.grade=ITEM_GRADES[Math.min(ITEM_GRADES.length-1,item.realm)];item.level=1;if(type==='pet'){item.attack+=5;item.defense+=3;item.speed+=2;item.maxHp+=25;item.maxMp+=15;item.hp=item.maxHp;item.mp=item.maxMp;}else if(type==='puppet'){item.attack+=6;item.defense+=8;item.speed+=2;item.maxDurability+=40;item.durability=item.maxDurability;}else{item.speedBonus+=4;item.exploreBonus+=4;item.timeReduction=Math.min(.45,item.timeReduction+.04);item.maxDurability+=35;item.durability=item.maxDurability;}save();updateUI();renderCompanionsPage();alert(`${item.name}成功提升為${item.grade}・${getCompanionRealmLabel(item)}`);}
+function getCompanionRealmLabel(item,type) { return type==='pet'?getPetRealmLabel(item):COMPANION_REALM_NAMES[Math.min(COMPANION_REALM_NAMES.length-1,item.realm||0)]; }
+function advanceCompanionItem(type,item) { if(!item){alert('找不到夥伴。');return;}if(item.level<10){alert('需先升至 Lv.10 才能提升大境界。');return;}const realm=item.realm||0,herb=(realm+1)*5,stone=(realm+1)*5,spirit=(realm+1)*100;if((player.resources.herb||0)<herb||(player.resources.stone||0)<stone||player.spiritStones<spirit){alert(`提升大境界需要靈草 ${herb}、礦石 ${stone}、靈石 ${spirit}。`);return;}player.resources.herb-=herb;player.resources.stone-=stone;player.spiritStones-=spirit;item.realm=realm+1;item.level=1;if(type==='pet'){item.attack+=5;item.defense+=3;item.speed+=2;item.maxHp+=25;item.maxMp+=15;item.hp=item.maxHp;item.mp=item.maxMp;}else if(type==='puppet'){item.grade=ITEM_GRADES[Math.min(ITEM_GRADES.length-1,item.realm)];item.attack+=6;item.defense+=8;item.speed+=2;item.maxDurability+=40;item.durability=item.maxDurability;}else{item.grade=ITEM_GRADES[Math.min(ITEM_GRADES.length-1,item.realm)];item.speedBonus+=4;item.exploreBonus+=4;item.timeReduction=Math.min(.45,item.timeReduction+.04);item.maxDurability+=35;item.durability=item.maxDurability;}save();updateUI();renderCompanionsPage();alert(`${item.name}成功提升為${type==='pet'?getPetRealmLabel(item):item.grade+'・'+getCompanionRealmLabel(item,type)}`);}
 function advanceCompanion(type) { const item=type==='pet'?getActivePet():type==='puppet'?getActivePuppet():getActiveMount();advanceCompanionItem(type,item); }
 function advanceCompanionById(type,id) { advanceCompanionItem(type,getCompanionById(type,id)); }
 function renameCompanion(type,id) { const item=getCompanionById(type,id);if(!item)return;const name=prompt('請輸入新的夥伴名稱：',item.name);if(!name||!name.trim())return;item.name=name.trim().slice(0,24);save();updateUI();renderCompanionsPage(); }
+function deleteCompanion(type,id) { const labels={pet:'靈獸',puppet:'傀儡',mount:'坐騎／飛行法器'},item=getCompanionById(type,id);if(!item)return;if(!confirm(`確定要刪除${labels[type]}「${item.name}」嗎？此操作無法復原。`))return;const list=type==='pet'?player.companions.pets:type==='puppet'?player.companions.puppets:player.companions.mounts,key=type==='pet'?'activePetIds':type==='puppet'?'activePuppetIds':'activeMountIds';player.companions[key]=(player.companions[key]||[]).filter(activeId=>activeId!==id);const index=list.findIndex(entry=>entry.id===id);if(index>=0)list.splice(index,1);if(type==='pet')player.companions.activePetId=player.companions[key][0]||null;if(type==='puppet')player.companions.activePuppetId=player.companions[key][0]||null;if(type==='mount')player.companions.activeMountId=player.companions[key][0]||null;save();updateUI();renderCompanionsPage();}
 function renderCompanionsPage() { const d=document.getElementById('companionsContent');if(!d||!player.companions)return;const petCards=player.companions.pets.map(p=>`<div class="shop-item"><strong>${p.name}（${p.grade}・${p.element}）</strong><br>Lv.${p.level}｜資質 ${p.aptitude}｜忠誠 ${p.loyalty}<br>攻 ${p.attack} 防 ${p.defense} 速 ${p.speed} 運 ${p.luck}<br>氣血 ${p.hp}/${p.maxHp}｜真氣 ${p.mp}/${p.maxMp}<br><button onclick="setActiveCompanion('pet','${p.id}')">${p.id===player.companions.activePetId?'出戰中':'設為出戰'}</button> <button onclick="feedPet('${p.id}')">餵養</button></div>`).join('')||'<p>尚無靈寵。</p>';const puppetCards=player.companions.puppets.map(p=>`<div class="shop-item"><strong>${p.name}（${p.grade}・${p.element}）</strong><br>Lv.${p.level}｜耐久 ${p.durability}/${p.maxDurability}｜每次探險耗靈石 ${p.energyCost}<br>攻 ${p.attack} 防 ${p.defense} 速 ${p.speed}<br><button onclick="setActiveCompanion('puppet','${p.id}')">${p.id===player.companions.activePuppetId?'出戰中':'設為出戰'}</button> <button onclick="upgradePuppet('${p.id}')">升級</button> <button onclick="repairPuppet('${p.id}')">修理</button></div>`).join('')||'<p>尚無傀儡。</p>';const mountCards=player.companions.mounts.map(m=>`<div class="shop-item"><strong>${m.name}（${m.grade}・${m.element}）</strong><br>Lv.${m.level}｜耐久 ${m.durability}/${m.maxDurability}<br>探險成功率 +${m.exploreBonus}%｜探險時間 -${Math.floor(m.timeReduction*100)}%｜速度 +${m.speedBonus}<br><button onclick="setActiveCompanion('mount','${m.id}')">${m.id===player.companions.activeMountId?'使用中':'設為使用'}</button></div>`).join('')||'<p>尚無坐騎／飛行法器。</p>';d.innerHTML=`<h4>出戰配置</h4><p>靈寵：${getActivePet()?getActivePet().name:'未選擇'}｜傀儡：${getActivePuppet()?getActivePuppet().name:'未選擇'}｜飛行法器：${getActiveMount()?getActiveMount().name:'未選擇'}</p><button onclick="claimPetEgg()">孵化靈寵蛋（靈草 3、獸肉 2）</button> <button onclick="craftPuppet()">打造木甲傀儡（木材 3、礦石 3、靈石 20）</button> <button onclick="craftMount()">打造青雲飛梭（木材 5、礦石 5、靈石 50）</button><h4>靈寵</h4><div class="shop-list">${petCards}</div><h4>傀儡</h4><div class="shop-list">${puppetCards}</div><h4>坐騎／飛行法器</h4><div class="shop-list">${mountCards}</div>`; }
 function renderCompanionRequirementNotes() { if(!document.querySelectorAll)return;[['pet',player.companions.pets],['puppet',player.companions.puppets],['mount',player.companions.mounts]].forEach(([type,list])=>(list||[]).forEach(item=>{const button=document.querySelector(`button[onclick*="setActiveCompanion('${type}','${item.id}')"]`);const card=button&&button.closest('.shop-item');if(!card)return;const ids=player.companions[type==='pet'?'activePetIds':type==='puppet'?'activePuppetIds':'activeMountIds']||[];button.textContent=ids.includes(item.id)?'出戰中（點擊撤下）':'加入出戰';if(!card.querySelector(`[data-charm-note="${item.id}"]`)){const note=document.createElement('small');note.dataset.charmNote=item.id;note.innerHTML=`<br>所需魅力：${getCompanionCharmRequirement(item)}｜境界：${getCompanionRealmLabel(item)}｜品階：${item.grade}`;card.appendChild(note);const rename=document.createElement('button');rename.textContent='改名';rename.onclick=()=>renameCompanion(type,item.id);const advance=document.createElement('button');advance.textContent='提升大境界';advance.onclick=()=>advanceCompanionById(type,item.id);card.append(rename,advance);}})); }
 const _renderCompanionsPage=renderCompanionsPage;renderCompanionsPage=function(){_renderCompanionsPage();renderCompanionRequirementNotes();};
+// V1-14：每張夥伴卡片自帶完整操作，靈獸採用修士式境界／靈根，不再套用品階。
+renderCompanionsPage=function(){
+  const d=document.getElementById('companionsContent');if(!d||!player.companions)return;
+  const active=(type,id)=>((player.companions[type==='pet'?'activePetIds':type==='puppet'?'activePuppetIds':'activeMountIds']||[]).includes(id));
+  const buttons=(type,item,extra='')=>`<div class="companion-actions"><button onclick="setActiveCompanion('${type}','${item.id}')">${active(type,item.id)?'出戰中（點擊撤下）':'加入出戰'}</button> ${extra}<button onclick="advanceCompanionById('${type}','${item.id}')">提升大境界</button> <button onclick="renameCompanion('${type}','${item.id}')">改名</button> <button onclick="deleteCompanion('${type}','${item.id}')">刪除</button></div>`;
+  const pets=(player.companions.pets||[]).map(p=>`<div class="shop-item"><strong>${p.name}（${getPetRealmLabel(p)}・${p.element}）</strong><br>Lv.${p.level}｜靈根 ${p.root||1}｜悟性 ${p.comprehension||1}｜資質 ${p.aptitude||0}｜忠誠 ${p.loyalty||0}/100<br>升級經驗 ${p.exp||0}/${getPetExpNeeded(p)}｜攻 ${p.attack} 防 ${p.defense} 速 ${p.speed} 運 ${p.luck}<br>氣血 ${p.hp}/${p.maxHp}｜真氣 ${p.mp}/${p.maxMp}<br>${buttons('pet',p,`<button onclick="upgradePet('${p.id}')">升級</button> <button onclick="feedPet('${p.id}')">餵食（忠誠）</button> <button onclick="repairPet('${p.id}')">療傷</button> `)}<small><br>所需魅力：${getCompanionCharmRequirement(p)}｜境界：${getPetRealmLabel(p)}｜靈根與悟性會降低升級所需經驗。</small></div>`).join('')||'<p>尚無靈獸。</p>';
+  const puppets=(player.companions.puppets||[]).map(p=>`<div class="shop-item"><strong>${p.name}（${p.grade||'入品'}・${p.element}）</strong><br>Lv.${p.level}｜耐久 ${p.durability}/${p.maxDurability}｜每次探險耗靈石 ${p.energyCost}<br>攻 ${p.attack} 防 ${p.defense} 速 ${p.speed}<br>${buttons('puppet',p,`<button onclick="upgradePuppet('${p.id}')">升級</button> <button onclick="repairPuppet('${p.id}')">修理</button> `)}<small><br>所需魅力：${getCompanionCharmRequirement(p)}｜境界：${getCompanionRealmLabel(p,'puppet')}｜品階：${p.grade||'入品'}</small></div>`).join('')||'<p>尚無傀儡。</p>';
+  const mounts=(player.companions.mounts||[]).map(m=>`<div class="shop-item"><strong>${m.name}（${m.grade||'入品'}・${m.element}）</strong><br>Lv.${m.level}｜耐久 ${m.durability}/${m.maxDurability}<br>探險成功率 +${m.exploreBonus}%｜探險時間 -${Math.floor(m.timeReduction*100)}%｜速度 +${m.speedBonus}<br>${buttons('mount',m,`<button onclick="upgradeMount('${m.id}')">升級</button> <button onclick="repairMount('${m.id}')">修理</button> `)}<small><br>所需魅力：${getCompanionCharmRequirement(m)}｜境界：${getCompanionRealmLabel(m,'mount')}｜品階：${m.grade||'入品'}</small></div>`).join('')||'<p>尚無坐騎／飛行法器。</p>';
+  const names=(type)=>({pet:getActivePets(),puppet:getActivePuppets(),mount:getActiveMounts()})[type].map(item=>item.name).join('、')||'未選擇';
+  d.innerHTML=`<h4>出戰配置</h4><p>靈獸：${names('pet')}｜傀儡：${names('puppet')}｜飛行法器：${names('mount')}<br>目前魅力使用：${getActiveCompanionCharmCost()}／${getEffectiveCharisma()}</p><button onclick="claimPetEgg()">孵化靈獸蛋（靈草 3、獸肉 2）</button> <button onclick="craftPuppet()">打造木甲傀儡（木材 3、礦石 3、靈石 20）</button> <button onclick="craftMount()">打造青雲飛梭（木材 5、礦石 5、靈石 50）</button><h4>靈獸</h4><div class="shop-list">${pets}</div><h4>傀儡</h4><div class="shop-list">${puppets}</div><h4>坐騎／飛行法器</h4><div class="shop-list">${mounts}</div><button onclick="showPage('mainMenu')">回主選單</button>`;
+};
 const EXPLORE_DUNGEONS = [
   {id:'mortal',name:'凡塵試煉',minLevel:0,element:'土',stamina:15,time:30,baseRate:88,rewards:{spiritStones:12,stone:2,wood:1},description:'適合凡人與初入修行者，產出基礎材料。'},
   {id:'qi',name:'靈氣洞府',minLevel:11,element:'木',stamina:22,time:50,baseRate:76,rewards:{spiritStones:24,herb:3,stone:1},description:'練氣期可挑戰，常見木屬性妖植與靈草。'},
@@ -1361,12 +1385,13 @@ function updateUI() {
   const critEl=document.getElementById('attr_crit');if(critEl)critEl.innerText=player.stats.crit||0;
   const elementAttackEl=document.getElementById('attr_elementAttack');if(elementAttackEl)elementAttackEl.innerText=player.stats.elementAttack||0;
   // 主動屬性
-  document.getElementById('attr_strength').innerText = player.stats.strength;
-  document.getElementById('attr_dexterity').innerText = player.stats.dexterity;
-  document.getElementById('attr_intelligence').innerText = player.stats.intelligence;
-  document.getElementById('attr_constitution').innerText = player.stats.constitution;
-  document.getElementById('attr_spirit').innerText = player.stats.spirit;
-  document.getElementById('attr_charisma').innerText = player.stats.charisma;
+  const sectBonus=getSectPassiveBonus(),suffix=sectBonus?`（宗門 +${sectBonus}）`:'';
+  document.getElementById('attr_strength').innerText = player.stats.strength+sectBonus+suffix;
+  document.getElementById('attr_dexterity').innerText = player.stats.dexterity+sectBonus+suffix;
+  document.getElementById('attr_intelligence').innerText = player.stats.intelligence+sectBonus+suffix;
+  document.getElementById('attr_constitution').innerText = player.stats.constitution+sectBonus+suffix;
+  document.getElementById('attr_spirit').innerText = player.stats.spirit+sectBonus+suffix;
+  document.getElementById('attr_charisma').innerText = player.stats.charisma+sectBonus+suffix;
   // 修仙屬性與宗門
   document.getElementById('cult_root').innerText = player.cultivation.root;
   document.getElementById('cult_comprehension').innerText = player.cultivation.comprehension;
@@ -1384,6 +1409,9 @@ function updateUI() {
   document.getElementById('equip_weapon').innerText = player.equipment.weapon || '無';
   document.getElementById('equip_armor').innerText = player.equipment.armor || '無';
   document.getElementById('equip_accessory').innerText = player.equipment.accessory || '無';
+  document.getElementById('equip_shoes').innerText = player.equipment.shoes || '無';
+  document.getElementById('equip_shield').innerText = player.equipment.shield || '無';
+  document.getElementById('equip_bracers').innerText = player.equipment.bracers || '無';
   renderEquipmentDetail();
   // 資源顯示
   const resourceNames = { stone:'礦石', wood:'木材', herb:'靈草', meat:'獸肉', elixir:'丹藥', gear:'裝備' };
@@ -1815,6 +1843,9 @@ function getEquipmentLevel(name) { const match=String(name).match(/\s*\+(\d+)$/)
 function getEquipmentSlot(name) {
   const category=getItemCategory(name),base=getEquipmentBaseName(name);
   if(category==='兵器'||/劍|刀|槍|弓/.test(base))return 'weapon';
+  if(/鞋|靴/.test(base))return 'shoes';
+  if(/護盾|盾牌|盾/.test(base))return 'shield';
+  if(/護腕|腕甲/.test(base))return 'bracers';
   if(category==='裝備'||/法衣|盔|甲/.test(base))return 'armor';
   if(category==='靈器'||/飾品|戒|佩/.test(base))return 'accessory';
   return null;
@@ -1826,9 +1857,12 @@ function getEquipmentStats(name) {
   if(slot==='weapon'){stats.attack=Math.floor(5*multiplier);stats.explore=Math.min(8,grade+Math.floor(level/2));}
   if(slot==='armor'){stats.defense=Math.floor(4*multiplier);stats.maxHp=Math.floor(12*multiplier);stats.explore=Math.min(6,Math.floor(grade/2)+Math.floor(level/3));}
   if(slot==='accessory'){stats.speed=Math.floor(2*multiplier);stats.luck=Math.floor(2*multiplier);stats.maxMp=Math.floor(10*multiplier);stats.explore=Math.min(7,Math.floor(grade/2)+Math.floor(level/2));}
+  if(slot==='shoes'){stats.speed=Math.floor(3*multiplier);stats.explore=Math.min(6,Math.floor(grade/2)+Math.floor(level/2));}
+  if(slot==='shield'){stats.defense=Math.floor(5*multiplier);stats.maxHp=Math.floor(8*multiplier);}
+  if(slot==='bracers'){stats.attack=Math.floor(2*multiplier);stats.defense=Math.floor(2*multiplier);}
   return {slot,grade,level,stats};
 }
-function formatEquipmentStats(name) { const data=getEquipmentStats(name);if(!data)return '';const parts=Object.entries(data.stats).filter(([,value])=>value).map(([key,value])=>({attack:'攻擊',defense:'防禦',speed:'速度',luck:'運氣',maxHp:'氣血上限',maxMp:'真氣上限',explore:'探險成功率'}[key]+` +${value}${key==='explore'?'%':''}`));return `${data.slot==='weapon'?'武器':data.slot==='armor'?'盔甲':'飾品／靈器'}｜強化 +${data.level}｜${parts.join('、')}`; }
+function formatEquipmentStats(name) { const data=getEquipmentStats(name);if(!data)return '';const parts=Object.entries(data.stats).filter(([,value])=>value).map(([key,value])=>({attack:'攻擊',defense:'防禦',speed:'速度',luck:'運氣',maxHp:'氣血上限',maxMp:'真氣上限',explore:'探險成功率'}[key]+` +${value}${key==='explore'?'%':''}`)),labels={weapon:'武器',armor:'盔甲',accessory:'飾品／靈器',shoes:'鞋子',shield:'護盾',bracers:'護腕'};return `${labels[data.slot]}｜強化 +${data.level}｜${parts.join('、')}`; }
 function equipItem(name) {
   const slot=getEquipmentSlot(name);if(!slot||!player.bag.items[name])return;
   const previous=player.equipment[slot]; player.bag.items[name]--;if(player.bag.items[name]<=0)delete player.bag.items[name];
@@ -1846,7 +1880,7 @@ function enhanceEquipment(slot) {
 }
 function renderEquipmentDetail() {
   const detail=document.getElementById('equipmentDetail');if(!detail)return;
-  const labels={weapon:'武器',armor:'盔甲',accessory:'飾品／靈器'};
+  const labels={weapon:'武器',armor:'盔甲',accessory:'飾品／靈器',shoes:'鞋子',shield:'護盾',bracers:'護腕'};
   detail.innerHTML=Object.entries(labels).map(([slot,label])=>{const name=player.equipment[slot],data=getEquipmentStats(name);return name?`<div><strong>${label}</strong>：${formatEquipmentStats(name)} <button onclick="enhanceEquipment('${slot}')">強化</button></div>`:`<div><strong>${label}</strong>：未裝備</div>`;}).join('');
 }
 
@@ -1950,24 +1984,25 @@ function recalcPassiveStats() {
   const baseStamina = 100;
   // 主動屬性加成
   const equipmentStats=Object.values(player.equipment||{}).filter(Boolean).reduce((all,name)=>{const s=(getEquipmentStats(name)||{stats:{}}).stats;Object.keys(all).forEach(key=>all[key]+=(s[key]||0));return all;},{attack:0,defense:0,speed:0,luck:0,maxHp:0,maxMp:0});
-  player.stats.maxHp = baseHp + player.stats.strength * 12 + (Number(player.breakthroughHpBonus) || 0) + equipmentStats.maxHp;
+  const sectBonus=getSectPassiveBonus(),strength=player.stats.strength+sectBonus,dexterity=player.stats.dexterity+sectBonus,intelligence=player.stats.intelligence+sectBonus,constitution=player.stats.constitution+sectBonus,spirit=player.stats.spirit+sectBonus,charisma=player.stats.charisma+sectBonus;
+  player.stats.maxHp = baseHp + strength * 12 + (Number(player.breakthroughHpBonus) || 0) + equipmentStats.maxHp;
   player.stats.hp = Math.min(player.stats.hp, player.stats.maxHp);
-  player.stats.maxMp = baseMp + player.stats.spirit * 10 + (Number(player.breakthroughMpBonus) || 0) + equipmentStats.maxMp;
+  player.stats.maxMp = baseMp + spirit * 10 + (Number(player.breakthroughMpBonus) || 0) + equipmentStats.maxMp;
   player.stats.mp = Math.min(player.stats.mp, player.stats.maxMp);
   // 計算體力值：基礎 + 體力屬性影響
-  player.stats.maxStamina = baseStamina + player.stats.constitution * 10;
+  player.stats.maxStamina = baseStamina + constitution * 10;
   // 初始若沒有體力值則設為最大體力值，否則限制在最大值範圍內
   if (player.stats.stamina === undefined) {
     player.stats.stamina = player.stats.maxStamina;
   } else {
     player.stats.stamina = Math.min(player.stats.stamina, player.stats.maxStamina);
   }
-  player.stats.attack = baseAttack + player.stats.strength * 2 + equipmentStats.attack;
-  player.stats.defense = baseDefense + player.stats.constitution * 2 + equipmentStats.defense;
-  player.stats.speed = baseSpeed + player.stats.dexterity + equipmentStats.speed;
-  player.stats.luck = baseLuck + player.stats.charisma + equipmentStats.luck;
-  player.stats.crit = Math.min(95, Math.floor(player.stats.dexterity * 1.5));
-  player.stats.elementAttack = Math.floor(player.stats.intelligence * 2 + (player.cultivation.root || 1));
+  player.stats.attack = baseAttack + strength * 2 + equipmentStats.attack;
+  player.stats.defense = baseDefense + constitution * 2 + equipmentStats.defense;
+  player.stats.speed = baseSpeed + dexterity + equipmentStats.speed;
+  player.stats.luck = baseLuck + charisma + equipmentStats.luck;
+  player.stats.crit = Math.min(95, Math.floor(dexterity * 1.5));
+  player.stats.elementAttack = Math.floor(intelligence * 2 + (player.cultivation.root || 1));
 }
 
 // 更新角色創建面板的屬性顯示
@@ -2084,7 +2119,7 @@ function renderSectInfo() {
   html += `<p><strong>宗門等級：</strong>${sect.level}</p>`;
   html += `<p><strong>宗門總貢獻：</strong>${sect.contribution}</p>`;
   html += `<p><strong>你的個人貢獻：</strong>${player.cultivation.contribution || 0}</p>`;
-  html += `<p><strong>你的宗門位階：</strong>${player.cultivation.sectRank}</p>`;
+  html += `<p><strong>你的宗門位階：</strong>${player.cultivation.sectRank}｜被動：全能力 +${getSectPassiveBonus()}</p>`;
   html += '<div class="sect-feature-grid">';
   html += '<button onclick="showSectRankTable()">查看仙門位階一覽表</button>';
   html += '<button onclick="showSectMembers()">成員列表</button>';
@@ -2165,7 +2200,7 @@ function showSectRankTable(){
   const d=document.getElementById('sectDetail'); if(!d)return;
   let html='<h4>仙門位階一覽表</h4><ul>';
   const currentIndex=SECT_RANK_EXCHANGE.findIndex(r=>r.title===player.cultivation.sectRank),currentCost=currentIndex>=0?SECT_RANK_EXCHANGE[currentIndex].cost:0;
-  SECT_RANK_EXCHANGE.forEach((r,index)=>{const gap=Math.max(0,r.cost-currentCost);html+=`<li>${r.title}：累計門檻 ${r.cost}｜本次只需補差額 ${gap} <button ${index<=currentIndex?'disabled':''} onclick="exchangeSectRank('${r.title}',${r.cost})">兌換</button></li>`});
+  SECT_RANK_EXCHANGE.forEach((r,index)=>{const gap=Math.max(0,r.cost-currentCost);html+=`<li>${r.title}：累計門檻 ${r.cost}｜被動全能力 +${index+1}｜本次只需補差額 ${gap} <button ${index<=currentIndex?'disabled':''} onclick="exchangeSectRank('${r.title}',${r.cost})">兌換</button></li>`});
   d.innerHTML=html+'</ul>';
 }
 function exchangeSectRank(title,cost){
@@ -2348,5 +2383,6 @@ load(); setInterval(tick, 1000); setInterval(recoverStaminaByTime, 10000); setIn
 </script>
   <button id="backToBottom" onclick="window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})" aria-label="前往頁面底部">↓ 底部</button>
   <button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="回到頁面頂端">↑ 頂部</button>
+  <button id="backToMenu" onclick="showPage('mainMenu')" aria-label="回到主選單">⌂ 主選單</button>
 </body>
 </html>
