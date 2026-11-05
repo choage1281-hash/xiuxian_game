@@ -250,6 +250,11 @@
       <p class="batch-hint">輸入次數後開始；「最大」會依目前體力自動帶入可進行次數。煉丹、煉器另受材料數量限制。</p>
       <div class="skills-grid" id="skillsGrid"></div>
     </div>
+    <div class="panel">
+      <h3>夥伴委派工作</h3>
+      <p class="batch-hint">夥伴工作不消耗玩家體力，改消耗靈獸真氣或傀儡耐久與靈石。每位夥伴有獨立工作熟練度；符合條件才會出現在可委派名單中。靈獸依等級、忠誠與靈性屬性解鎖；傀儡依等級解鎖（採礦／砍柴 Lv.2、種田 Lv.3、狩獵／畫符 Lv.4、煉丹／煉器 Lv.5）。</p>
+      <div class="skills-grid" id="companionWorkGrid"></div>
+    </div>
     <button onclick="showPage('mainMenu')">返回主選單</button>
   </div>
 
@@ -1117,7 +1122,7 @@ function getGrade(level) {
   return GRADE_NAMES[index];
 }
 
-const ACTION_LABELS = { train:'修練', mine:'採礦', cutWood:'砍柴', farm:'種田', hunt:'狩獵', drawTalisman:'畫符', pill:'煉丹', gear:'煉器', explore:'秘境探險' };
+const ACTION_LABELS = { train:'修練', mine:'採礦', cutWood:'砍柴', farm:'種田', hunt:'狩獵', drawTalisman:'畫符', pill:'煉丹', gear:'煉器', explore:'秘境探險', companionWork:'夥伴工作' };
 function companionId(prefix) { return `${prefix}_${Date.now()}_${Math.floor(Math.random()*100000)}`; }
 function getSectPassiveBonus() { if(!player||!player.joinedSect)return 0;const index=SECT_RANK_EXCHANGE.findIndex(rank=>rank.title===player.cultivation.sectRank);return index<0?(player.isSectMaster?10:0):index+1; }
 function getEffectiveCharisma() { return (player.stats.charisma||1)+getSectPassiveBonus(); }
@@ -1316,7 +1321,7 @@ function renderSkillsGrid() {
       const recipe = unlocked.some(r => r.key === selected.key) ? selected : unlocked[unlocked.length - 1];
       const options = unlocked.map(r => `<option value="${r.key}"${r.key === recipe.key ? ' selected' : ''}>${r.name}（需煉丹 Lv.${r.requiredLevel}）</option>`).join('');
       const detail = `${recipe.herb} 靈草${recipe.stone ? '＋' + recipe.stone + ' 礦石' : ''}${recipe.meat ? '＋' + recipe.meat + ' 獸肉' : ''}${recipe.breakthrough ? '＋1 ' + recipe.recipeItem : ''} → ${recipe.name} · 體力 ${recipe.stamina} · 成功率 ${getAlchemySuccessRate(recipe)}%`;
-      return `<div class="skill-card"><h4>煉丹（Lv.${getAlchemyLevel()}）</h4><select id="pillRecipe" onchange="renderSkillsGrid()">${options}</select><p>${detail}</p><div class="batch-controls"><input id="batch_pill" type="number" min="1" value="1" aria-label="煉丹次數"><button class="batch-max" onclick="fillMaxBatch('pill')">最大</button><button onclick="startBatch('pill')">開始</button></div></div>`;
+      return `<div class="skill-card"><h4>煉丹（Lv.${getAlchemyLevel()}）</h4><select id="pillRecipe" onchange="renderSkillsGrid();renderCompanionWorkGrid()">${options}</select><p>${detail}</p><div class="batch-controls"><input id="batch_pill" type="number" min="1" value="1" aria-label="煉丹次數"><button class="batch-max" onclick="fillMaxBatch('pill')">最大</button><button onclick="startBatch('pill')">開始</button></div></div>`;
     }
     const detail = `${result} · 體力 ${STAMINA_COST[type]}`;
     return `<div class="skill-card"><h4>${name}</h4><p>${detail}</p><div class="batch-controls"><input id="batch_${type}" type="number" min="1" value="1" aria-label="${name}次數"><button class="batch-max" onclick="fillMaxBatch('${type}')">最大</button><button onclick="startBatch('${type}')">開始</button></div></div>`;
@@ -1339,7 +1344,7 @@ function renderActionSlots() {
     const remaining = Math.max(0, action.endTime - Date.now());
     const elapsed = Math.max(0, Date.now() - action.startTime);
     const percent = Math.min(100, Math.floor(elapsed / (action.endTime - action.startTime) * 100));
-    const explore=getExploreMetadata(action); const label=explore ? `${explore.dungeon ? explore.dungeon.name : '秘境'}・${explore.difficulty.name}・${explore.strategy.name}` : ACTION_LABELS[action.type];
+    const explore=getExploreMetadata(action),work=action.type==='companionWork'?String(action.name||'').split('|'):null; const label=explore ? `${explore.dungeon ? explore.dungeon.name : '秘境'}・${explore.difficulty.name}・${explore.strategy.name}` : work ? `夥伴・${COMPANION_WORKS[work[3]]||'工作'}` : ACTION_LABELS[action.type];
     html += `<div class="action-slot busy"><strong>欄位 ${i + 1} · ${label}</strong><br>${explore?'探險結算中':`批量 ${action.count} 次`} · 剩餘 ${Math.ceil(remaining / 1000)} 秒<div class="action-progress"><span style="width:${percent}%"></span></div></div>`;
   }
   slots.innerHTML = html;
@@ -1422,6 +1427,7 @@ function updateUI() {
     }
   }
   renderSkillsGrid();
+  renderCompanionWorkGrid();
   renderShopCatalog();
   renderActionSlots();
   // 更新背包顯示
@@ -1466,6 +1472,7 @@ function tick() {
 function finishAction(action) {
   if (!action) return;
   if (action.type === 'explore') { finishExploration(action); return; }
+  if (action.type === 'companionWork') { finishCompanionWork(action); return; }
   const count = action.count || 1;
   let expGain = 0;
   switch (action.type) {
@@ -1971,6 +1978,37 @@ function startRefineBatch(type, count) {
   save(); updateUI();
   alert(`${ACTION_LABELS[type]}批量完成：${count} 次。`);
 }
+
+// 夥伴工作：以夥伴自身真氣／耐久執行，不消耗玩家體力；每名夥伴的熟練度分開保存。
+const COMPANION_WORKS={mine:'採礦',cutWood:'砍柴',farm:'種田',hunt:'狩獵',drawTalisman:'畫符',pill:'煉丹',gear:'煉器'};
+function getAllCompanionWorkers(){return [...(player.companions.pets||[]).map(item=>({type:'pet',item})),...(player.companions.puppets||[]).map(item=>({type:'puppet',item}))];}
+function getCompanionWorkData(item,skill){item.workSkills=item.workSkills||{};item.workSkills[skill]=item.workSkills[skill]||{level:1,exp:0};return item.workSkills[skill];}
+function getCompanionWorkNeed(item,skill){const data=getCompanionWorkData(item,skill);return 30+(data.level-1)*20;}
+function getCompanionWorkEligibility(type,item,skill){
+  const level=item.level||1,element=item.element||'',loyalty=item.loyalty||0;
+  if(type==='pet'){
+    if(skill==='hunt')return level>=2&&loyalty>=60?'':'靈獸需 Lv.2、忠誠 60';
+    if(skill==='farm')return level>=2&&['木','水'].includes(element)?'':'靈獸需 Lv.2 且為木／水屬性';
+    if(skill==='cutWood')return level>=3&&element==='木'?'':'靈獸需 Lv.3 且為木屬性';
+    if(skill==='mine')return level>=5&&['土','金'].includes(element)?'':'靈獸需 Lv.5 且為土／金屬性';
+    if(skill==='drawTalisman')return level>=5&&loyalty>=80&&['雷','光'].includes(element)?'':'靈獸需 Lv.5、忠誠 80 且為雷／光屬性';
+    if(skill==='pill')return level>=5&&loyalty>=70&&['火','木'].includes(element)?'':'靈獸需 Lv.5、忠誠 70 且為火／木屬性';
+    if(skill==='gear')return level>=6&&loyalty>=80&&['火','金'].includes(element)?'':'靈獸需 Lv.6、忠誠 80 且為火／金屬性';
+  } else {
+    if(skill==='mine'||skill==='cutWood')return level>=2?'':'傀儡需 Lv.2';
+    if(skill==='farm')return level>=3?'':'傀儡需 Lv.3';
+    if(skill==='hunt')return level>=4?'':'傀儡需 Lv.4';
+    if(skill==='drawTalisman')return level>=4?'':'傀儡需 Lv.4';
+    if(skill==='pill'||skill==='gear')return level>=5?'':'傀儡需 Lv.5';
+  } return '不符合工作條件';
+}
+function isCompanionWorking(type,id){return activeActions.some(action=>String(action.name||'').split('|').slice(0,3).join('|')===`夥伴工作|${type}|${id}`);}
+function getCompanionWorkMax(type,item,skill,recipe){const cost=(skill==='drawTalisman'||skill==='pill'||skill==='gear')?3:2;let max=type==='pet'?Math.floor((item.mp||0)/cost):Math.floor((item.durability||0)/cost);if(type==='puppet')max=Math.min(max,Math.floor((player.spiritStones||0)/Math.max(1,item.energyCost||1)));if(skill==='pill'&&recipe){max=Math.min(max,Math.floor((player.resources.herb||0)/recipe.herb),recipe.stone?Math.floor((player.resources.stone||0)/recipe.stone):Infinity,recipe.meat?Math.floor((player.resources.meat||0)/recipe.meat):Infinity,recipe.breakthrough?getItemQuantity(recipe.recipeItem):Infinity);}if(skill==='gear')max=Math.min(max,Math.floor((player.resources.stone||0)/2),Math.floor((player.resources.meat||0)/2));return Math.max(0,Math.min(99,max));}
+function renderCompanionWorkGrid(){const grid=document.getElementById('companionWorkGrid');if(!grid)return;const all=getAllCompanionWorkers();grid.innerHTML=Object.entries(COMPANION_WORKS).map(([skill,label])=>{const eligible=all.filter(({type,item})=>!getCompanionWorkEligibility(type,item,skill)&&!isCompanionWorking(type,item.id)),recipe=skill==='pill'?getSelectedPillRecipe():null,options=eligible.map(({type,item})=>{const prof=getCompanionWorkData(item,skill);return `<option value="${type}|${item.id}">${item.name}（${type==='pet'?'靈獸':'傀儡'}｜熟練 Lv.${prof.level}）</option>`;}).join('');const detail=skill==='pill'?`使用目前選擇的 ${recipe.name} 配方與材料。`:skill==='gear'?'每次消耗礦石 2、獸肉 2。':'採集工作依夥伴熟練度提高產量。';const locked=all.filter(({type,item})=>getCompanionWorkEligibility(type,item,skill)).map(({type,item})=>`${item.name}：${getCompanionWorkEligibility(type,item,skill)}`).join('；');return `<div class="skill-card"><h4>委派${label}</h4><p>${detail}</p>${options?`<select id="companionWorker_${skill}">${options}</select><div class="batch-controls"><input id="companionQty_${skill}" type="number" min="1" value="1"><button class="batch-max" onclick="fillMaxCompanionWork('${skill}')">最大</button><button onclick="startCompanionWork('${skill}')">委派</button></div>`:`<small>目前無符合條件且空閒的夥伴。</small>`}${locked?`<small><br>條件：${locked}</small>`:''}</div>`;}).join('');}
+function getSelectedCompanionWorker(skill){const value=(document.getElementById('companionWorker_'+skill)||{}).value||'',parts=value.split('|'),type=parts[0],id=parts[1],item=type==='pet'?(player.companions.pets||[]).find(entry=>entry.id===id):(player.companions.puppets||[]).find(entry=>entry.id===id);return item?{type,item}:null;}
+function fillMaxCompanionWork(skill){const worker=getSelectedCompanionWorker(skill),input=document.getElementById('companionQty_'+skill);if(!worker||!input)return;input.value=Math.max(1,getCompanionWorkMax(worker.type,worker.item,skill,skill==='pill'?getSelectedPillRecipe():null));}
+function startCompanionWork(skill){const worker=getSelectedCompanionWorker(skill),input=document.getElementById('companionQty_'+skill),count=Math.floor(Number(input&&input.value)||1),recipe=skill==='pill'?getSelectedPillRecipe():null;if(!worker||!Number.isSafeInteger(count)||count<1){alert('請選擇夥伴並輸入有效次數。');return;}if(getCompanionWorkEligibility(worker.type,worker.item,skill)){alert('此夥伴尚未符合工作條件。');return;}if(isCompanionWorking(worker.type,worker.item.id)){alert('此夥伴正在工作中。');return;}if(activeActions.length>=getActionSlotCount()){alert(`進行中欄位已滿（目前可同時進行 ${getActionSlotCount()} 項）`);return;}const max=getCompanionWorkMax(worker.type,worker.item,skill,recipe);if(count>max||max<1){alert(`資源不足；此夥伴最多可執行 ${max} 次。`);return;}const cost=(skill==='drawTalisman'||skill==='pill'||skill==='gear')?3:2;if(worker.type==='pet')worker.item.mp-=cost*count;else{worker.item.durability-=cost*count;player.spiritStones-=(worker.item.energyCost||1)*count;}if(skill==='pill'){player.resources.herb-=recipe.herb*count;player.resources.stone-=recipe.stone*count;player.resources.meat-=recipe.meat*count;if(recipe.breakthrough)consumeItemBase(recipe.recipeItem,count);}if(skill==='gear'){player.resources.stone-=2*count;player.resources.meat-=2*count;}const now=Date.now();activeActions.push({type:'companionWork',count,startTime:now,endTime:now+count*6000,name:`夥伴工作|${worker.type}|${worker.item.id}|${skill}|${recipe?recipe.key:''}`});save();updateUI();alert(`已委派${worker.item.name}進行${COMPANION_WORKS[skill]} ${count} 次。`);}
+function finishCompanionWork(action){const [,type,id,skill,recipeKey]=String(action.name||'').split('|'),item=type==='pet'?(player.companions.pets||[]).find(entry=>entry.id===id):(player.companions.puppets||[]).find(entry=>entry.id===id),count=Math.max(1,Number(action.count)||1);if(!item||!COMPANION_WORKS[skill]){activeActions=activeActions.filter(entry=>entry!==action);save();updateUI();return;}const data=getCompanionWorkData(item,skill),bonus=1+Math.floor((data.level-1)/4);if(skill==='mine')player.resources.stone+=count*bonus;if(skill==='cutWood')player.resources.wood+=count*bonus;if(skill==='farm')player.resources.herb+=count*bonus;if(skill==='hunt')player.resources.meat+=count*bonus;if(skill==='drawTalisman')addItemToBag('符咒',count*bonus);if(skill==='gear')player.resources.gear+=count*bonus;if(skill==='pill'){const recipe=getPillRecipe(recipeKey);let success=0;const rate=Math.min(95,getAlchemySuccessRate(recipe)+(data.level-1)*2);for(let i=0;i<count;i++)if(Math.random()*100<rate)success++;if(success)addItemToBag(getCraftedItemName(recipe.name),success);}data.exp+=count*5;while(data.exp>=getCompanionWorkNeed(item,skill)){data.exp-=getCompanionWorkNeed(item,skill);data.level++;}activeActions=activeActions.filter(entry=>entry!==action);save();updateUI();alert(`${item.name}完成${COMPANION_WORKS[skill]} ${count} 次！工作熟練度 Lv.${data.level}（${data.exp}/${getCompanionWorkNeed(item,skill)}）。`);}
 
 // 計算被動屬性：根據主動屬性更新攻擊、防禦、速度、運氣和最大HP/MP
 function recalcPassiveStats() {
